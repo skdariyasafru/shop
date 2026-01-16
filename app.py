@@ -5,12 +5,7 @@ import os
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# If running locally (not Render)
-DB_NAME = "your_db_name"
-DB_USER = "user1"
-DB_PASSWORD = "your_password"
-DB_HOST = "localhost"
-DB_PORT = "5432"
+
 
 # Render provides DATABASE_URL automatically
 DATABASE_URL = os.environ.get("DATABASE_URL")
