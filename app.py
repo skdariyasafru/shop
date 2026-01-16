@@ -27,6 +27,33 @@ def get_db():
 @app.route("/")
 def home():
     db = get_db()
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+
+    users_table = """
+    CREATE TABLE IF NOT EXISTS users1 (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100),
+        email VARCHAR(100),
+        password VARCHAR(100),
+        role VARCHAR(100)
+    );
+    """
+
+    products_table = """
+    CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100),
+        price NUMERIC
+    );
+    """
+
+    cursor.execute(users_table)
+    cursor.execute(products_table)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
     cur = db.cursor()
     cur.execute("SELECT * FROM products")
     products = cur.fetchall()
