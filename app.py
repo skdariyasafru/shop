@@ -29,8 +29,7 @@ def home():
     conn.commit()
     cur.close()    
     conn.close()
-     cur.execute("""
-            CREATE TABLE products 
+    cur.execute(""" CREATE TABLE products 
                 (
                   id SERIAL PRIMARY KEY,
                   name VARCHAR(100),
@@ -60,8 +59,8 @@ def register():
 
         db = get_db()
         cur = db.cursor()
-        cur.execute("INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
-                    (name,email,password))
+        cur.execute("INSERT INTO users1(name,email,password,type) VALUES(%s,%s,%s,%s)",
+                    (name,email,password,name))
         db.commit()
         return redirect("/login")
 
