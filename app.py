@@ -12,11 +12,11 @@ def get_db():
 
 @app.route("/")
 def home():
-     conn = get_db_connection()
+    conn = get_db_connection()
     cur = conn.cursor()
 
     cur.execute("""
-            CREATE TABLE users (
+            CREATE TABLE users1 (
                  id SERIAL PRIMARY KEY,
                 name VARCHAR(100),
                   email VARCHAR(100),
@@ -27,8 +27,24 @@ def home():
 
     
     conn.commit()
-    cur.close()
+    cur.close()    
     conn.close()
+     cur.execute("""
+            CREATE TABLE products 
+                (
+                  id SERIAL PRIMARY KEY,
+                  name VARCHAR(100),
+                  price NUMERIC
+                )
+                """)
+
+    
+    conn.commit()
+    cur.close()    
+    conn.close()
+
+
+    
     db = get_db()
     cur = db.cursor()
     cur.execute("SELECT * FROM products")
