@@ -14,36 +14,7 @@ def get_db():
 def home():
     conn = get_db_connection()
     cur = conn.cursor()
-
-    cur.execute("""
-            CREATE TABLE users1 (
-                 id SERIAL PRIMARY KEY,
-                name VARCHAR(100),
-                  email VARCHAR(100),
-                     password VARCHAR(100),
-                     type varchar(100)
-                )
-        """)
-
-    
-    conn.commit()
-    cur.close()    
-    conn.close()
-    cur.execute(""" CREATE TABLE products 
-                (
-                  id SERIAL PRIMARY KEY,
-                  name VARCHAR(100),
-                  price NUMERIC
-                )
-                """)
-
-    
-    conn.commit()
-    cur.close()    
-    conn.close()
-
-
-    
+ 
     db = get_db()
     cur = db.cursor()
     cur.execute("SELECT * FROM products")
