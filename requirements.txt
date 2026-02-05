@@ -1,3 +1,6 @@
-flask
-psycopg2-binary
+
+Flask
+Flask-SQLAlchemy
+Flask-Login
 gunicorn
+psycopg2-binary
