@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_login import LoginManager
-from config import Config
+#from config import Config
 from db import db, init_db
 
 login_manager = LoginManager()
@@ -11,7 +11,7 @@ def create_app():
     app = Flask(__name__)
 
     # Load config
-    app.config.from_object(Config)
+    app.config["SECRET_KEY"] = "secret"
 
     # Initialize PostgreSQL database
     init_db(app)
