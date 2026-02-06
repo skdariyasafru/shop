@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_login import LoginManager
-#from config import Config
-from db import db, init_db
+from db import init_db
+from db_init import create_tables
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -9,24 +9,25 @@ login_manager.login_view = "auth.login"
 
 def create_app():
     app = Flask(__name__)
-    
-    # Load config
+
     app.config["SECRET_KEY"] = "secret"
 
-    # Initialize PostgreSQL database
+    # Initialize database
     init_db(app)
 
-    # Initialize login manager
+    # Create tables
+    create_tables(app)
+
+    # Login manager
     login_manager.init_app(app)
 
-    # Import models AFTER db init
     from models.models import User
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register routes
+    # Register blueprints
     from routes.auth import auth_bp
     app.register_blueprint(auth_bp)
 
@@ -36,4 +37,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
