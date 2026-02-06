@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.models import User
 from db import db
+from models.models import Product
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -38,10 +39,12 @@ def login():
 
     return render_template("login.html")
 
+
 @auth_bp.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    products = Product.query.all()
+    return render_template("dashboard.html", products=products)
 
 @auth_bp.route("/logout")
 @login_required
