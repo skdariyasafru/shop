@@ -2,6 +2,8 @@ from flask import Flask
 from flask_login import LoginManager
 from db import init_db
 from db_init import create_tables
+from reset_user_table import reset_user_table
+
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -14,7 +16,7 @@ def create_app():
 
     # Initialize database
     init_db(app)
-
+    reset_user_table(app)
     # Create tables
     create_tables(app)
 
