@@ -8,7 +8,7 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 
 def create_app():
-app = Flask(--name--)
+app = Flask(__name__)
 
 ```
 app.config["SECRET_KEY"] = "secret"
@@ -37,6 +37,6 @@ return app
 
 app = create_app()
 
-if **name** == "**main**":
+if __name__ == "__main__":
 port = int(os.environ.get("PORT", 10000))
 app.run(host="0.0.0.0", port=port)
