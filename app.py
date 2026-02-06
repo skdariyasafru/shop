@@ -16,7 +16,7 @@ app.config["SECRET_KEY"] = "secret"
 # Initialize database
 init_db(app)
 
-# Create tables ONLY if not exist (safe)
+# Create tables only if not exist
 create_tables(app)
 
 # Login manager
