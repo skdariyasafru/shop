@@ -45,6 +45,34 @@ def add_to_cart():
     db.session.commit()
 
     return jsonify({"msg": "added"})
+@app.route("/cart")
+def view_cart():
+    if "user" not in session:
+        return redirect("/login")
+
+    items = Cart.query.filter_by(user=session["user"]).all()
+    total = sum(i.price for i in items)
+
+    return render_template("cart.html", items=items, total=total)
+@app.route("/checkout")
+def checkout():
+    if "user" not in session:
+        return redirect("/login")
+
+    items = Cart.query.filter_by(user=session["user"]).all()
+
+    for i in items:
+        order = Order(
+            user=i.user,
+            product_name=i.product_name,
+            price=i.price
+        )
+        db.session.add(order)
+        db.session.delete(i)
+
+    db.session.commit()
+
+    return redirect("/")
 
 app = create_app()
 
