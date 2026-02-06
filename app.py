@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from db import init_db
 from db_init import create_tables
 import os
+from models import User, Product, Cart, Order
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -27,6 +28,23 @@ def create_app():
     app.register_blueprint(auth_bp)
 
     return app
+@app.route("/add_to_cart", methods=["POST"])
+def add_to_cart():
+    if "user" not in session:
+        return redirect("/login")
+
+    data = request.json
+
+    item = Cart(
+        user=session["user"],
+        product_name=data["name"],
+        price=data["price"]
+    )
+
+    db.session.add(item)
+    db.session.commit()
+
+    return jsonify({"msg": "added"})
 
 app = create_app()
 
