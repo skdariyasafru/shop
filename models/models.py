@@ -11,7 +11,15 @@ class Product(db.Model):
     name = db.Column(db.String(200))
     price = db.Column(db.Float)
 
+
 class Cart(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    product_id = db.Column(db.Integer, db.ForeignKey("product.id"))
+    user = db.Column(db.String(100))
+    product_name = db.Column(db.String(200))
+    price = db.Column(db.Float)
+
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user = db.Column(db.String(100))
+    product_name = db.Column(db.String(200))
+    price = db.Column(db.Float)
