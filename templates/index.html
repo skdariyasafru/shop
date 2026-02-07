@@ -1,17 +1,149 @@
-
 <!DOCTYPE html>
+
 <html>
 <head>
-    <a href="/cart">Cart</a>
+    <title>Mini JioMart</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0;
+            background: #f5f5f5;
+        }
 
-    <title>Shopping App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+```
+    /* Header */
+    .header {
+        background: #ff3f6c;
+        color: white;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .search-bar input {
+        width: 300px;
+        padding: 8px;
+        border-radius: 5px;
+        border: none;
+    }
+
+    .login a {
+        color: white;
+        text-decoration: none;
+        margin-left: 15px;
+        font-weight: bold;
+    }
+
+    /* Products */
+    .products {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 0 5px #ccc;
+    }
+
+    .card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+
+    button {
+        background: #ff3f6c;
+        color: white;
+        border: none;
+        padding: 8px;
+        margin-top: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    button:hover {
+        background: #d92f58;
+    }
+</style>
+```
+
 </head>
+
 <body>
-    
-<div class="container mt-5">
-    <h1>Welcome to Shopping Cart App</h1>
-    <a href="/cart" class="btn btn-primary">View Cart</a>
+
+<!-- Header -->
+
+<div class="header">
+    <h2>🛒 Mini JioMart</h2>
+
+```
+<div class="search-bar">
+    <input type="text" placeholder="Search products...">
 </div>
+
+<div class="login">
+    <a href="/login">Login</a>
+    <a href="/cart">Cart</a>
+</div>
+```
+
+</div>
+
+<!-- Product Section -->
+
+<div class="products">
+
+```
+<div class="card">
+    <img src="https://via.placeholder.com/200">
+    <h3>Rice Bag</h3>
+    <p>₹500</p>
+    <button onclick="addToCart('Rice Bag', 500)">Add to Cart</button>
+</div>
+
+<div class="card">
+    <img src="https://via.placeholder.com/200">
+    <h3>Milk</h3>
+    <p>₹50</p>
+    <button onclick="addToCart('Milk', 50)">Add to Cart</button>
+</div>
+
+<div class="card">
+    <img src="https://via.placeholder.com/200">
+    <h3>Oil Bottle</h3>
+    <p>₹120</p>
+    <button onclick="addToCart('Oil Bottle', 120)">Add to Cart</button>
+</div>
+
+<div class="card">
+    <img src="https://via.placeholder.com/200">
+    <h3>Biscuits</h3>
+    <p>₹30</p>
+    <button onclick="addToCart('Biscuits', 30)">Add to Cart</button>
+</div>
+```
+
+</div>
+
+<script>
+function addToCart(name, price) {
+    fetch("/add_to_cart", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({name: name, price: price})
+    })
+    .then(res => res.json())
+    .then(data => alert("Added to cart!"));
+}
+</script>
+
 </body>
 </html>
