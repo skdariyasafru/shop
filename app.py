@@ -101,7 +101,7 @@ def create_app():
         data = request.json
 
         item = Cart(
-            user=session["user"],
+            username=session["user"],
             product_name=data["name"],
             price=data["price"]
         )
@@ -120,7 +120,7 @@ def create_app():
         if "user" not in session:
             return redirect("/login")
 
-        items = Cart.query.filter_by(user=session["user"]).all()
+        items = Cart.query.filter_by(username=session["user"]).all()
         total = sum(i.price for i in items)
 
         return render_template("cart.html", items=items, total=total)
@@ -134,7 +134,7 @@ def create_app():
         if "user" not in session:
             return redirect("/login")
 
-        items = Cart.query.filter_by(user=session["user"]).all()
+        items = Cart.query.filter_by(username=session["user"]).all()
 
         for i in items:
             order = Order(
