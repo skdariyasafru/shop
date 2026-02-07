@@ -4,7 +4,7 @@ from db import init_db, db
 from db_init import create_tables
 import os
 
-from models.models import User, Cart, Order
+from models.models import User, Product, Cart, Order
 
 login_manager = LoginManager()
 login_manager.login_view = "login"
@@ -14,30 +14,59 @@ def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "secret"
 
-    # Database setup
+    # =========================
+    # DATABASE SETUP
+    # =========================
     init_db(app)
     create_tables(app)
 
-    # Login manager
+    # =========================
+    # LOGIN MANAGER
+    # =========================
     login_manager.init_app(app)
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # =========================
     # HOME PAGE
+    # =========================
     @app.route("/")
     def home():
         return render_template("index.html")
 
+    # =========================
+    # GET PRODUCTS FROM DATABASE
+    # =========================
+    @app.route("/products")
+    def get_products():
+
+        products = Product.query.all()
+
+        data = []
+        for p in products:
+            data.append({
+                "id": p.id,
+                "name": p.name,
+                "price": p.price,
+                "image": p.image
+            })
+
+        return jsonify(data)
+
+    # =========================
     # REGISTER
+    # =========================
     @app.route("/register", methods=["GET", "POST"])
     def register():
+
         if request.method == "POST":
             username = request.form.get("username")
             password = request.form.get("password")
 
             new_user = User(username=username, password=password)
+
             db.session.add(new_user)
             db.session.commit()
 
@@ -45,9 +74,12 @@ def create_app():
 
         return render_template("register.html")
 
+    # =========================
     # LOGIN
+    # =========================
     @app.route("/login", methods=["GET", "POST"])
     def login():
+
         if request.method == "POST":
             username = request.form.get("username")
             password = request.form.get("password")
@@ -65,15 +97,20 @@ def create_app():
 
         return render_template("login.html")
 
+    # =========================
     # LOGOUT
+    # =========================
     @app.route("/logout")
     def logout():
         session.pop("user", None)
         return redirect("/")
 
+    # =========================
     # ADD TO CART
+    # =========================
     @app.route("/add_to_cart", methods=["POST"])
     def add_to_cart():
+
         if "user" not in session:
             return redirect("/login")
 
@@ -90,9 +127,12 @@ def create_app():
 
         return jsonify({"msg": "added"})
 
+    # =========================
     # VIEW CART
+    # =========================
     @app.route("/cart")
     def view_cart():
+
         if "user" not in session:
             return redirect("/login")
 
@@ -101,9 +141,12 @@ def create_app():
 
         return render_template("cart.html", items=items, total=total)
 
+    # =========================
     # CHECKOUT
+    # =========================
     @app.route("/checkout")
     def checkout():
+
         if "user" not in session:
             return redirect("/login")
 
@@ -111,7 +154,7 @@ def create_app():
 
         for i in items:
             order = Order(
-                user=i.username,  # fixed from i.user
+                user=i.username,
                 product_name=i.product_name,
                 price=i.price
             )
@@ -125,6 +168,9 @@ def create_app():
     return app
 
 
+# =========================
+# RUN APP
+# =========================
 app = create_app()
 
 if __name__ == "__main__":
