@@ -27,6 +27,24 @@ def create_app():
     # =====================
     # CART ROUTES
     # =====================
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+
+        if request.method == "POST":
+    
+            username = request.form.get("username")
+            password = request.form.get("password")
+    
+            user = User.query.filter_by(
+                username=username,
+                password=password
+            ).first()
+    
+            if user:
+                session["user"] = user.username
+                return redirect("/")
+    
+        return render_template("login.html")
 
     @app.route("/add_to_cart", methods=["POST"])
     def add_to_cart():
