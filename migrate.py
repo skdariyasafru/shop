@@ -8,11 +8,7 @@ def run_migration(app):
        
         
 
-        # Ensure required columns exist
-        db.session.execute(text("""
-            ALTER TABLE cart
-            ADD COLUMN IF NOT EXISTS product_name VARCHAR(200);
-        """))
+      
 
         db.session.execute(text("""
             ALTER TABLE cart
