@@ -11,7 +11,7 @@ class Cart(db.Model):
 
 
 class Order(db.Model):
-    __tablename__ = "orders"
+    __tablename__ = "order"
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100))
