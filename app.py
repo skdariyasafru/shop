@@ -5,6 +5,7 @@ from db_init import create_tables
 import os
 
 from models.models import User, Product, Cart, Order
+from migrate import run_migration
 
 login_manager = LoginManager()
 login_manager.login_view = "login"
@@ -18,7 +19,7 @@ def create_app():
     # Database setup
     init_db(app)
     create_tables(app)
-
+    run_migration(app)
     # Login manager
     login_manager.init_app(app)
 
