@@ -6,13 +6,7 @@ def run_migration(app):
     with app.app_context():
 
        
-        try:
-            db.session.execute(text("""
-                ALTER TABLE "order"
-                RENAME COLUMN "user" TO username;
-            """))
-        except:
-            pass
+        
 
         # Ensure required columns exist
         db.session.execute(text("""
