@@ -6,22 +6,44 @@ def run_migration(app):
     with app.app_context():
 
         try:
-            # Add username column to cart table if missing
+            # Rename column user → username (safe)
             db.session.execute(text("""
                 ALTER TABLE cart
-                ADD COLUMN IF NOT EXISTS "username" VARCHAR(100);
+                RENAME COLUMN "user" TO username;
             """))
 
-            # Add username column to order table if missing
+        except:
+            pass
+
+        try:
             db.session.execute(text("""
-                ALTER TABLE "orders"
-                ADD COLUMN IF NOT EXISTS "username" VARCHAR(100);
+                ALTER TABLE "order"
+                RENAME COLUMN "user" TO username;
             """))
+        except:
+            pass
 
-            db.session.commit()
+        # Ensure required columns exist
+        db.session.execute(text("""
+            ALTER TABLE cart
+            ADD COLUMN IF NOT EXISTS product_name VARCHAR(200);
+        """))
 
-            print("✅ Migration completed")
+        db.session.execute(text("""
+            ALTER TABLE cart
+            ADD COLUMN IF NOT EXISTS price FLOAT;
+        """))
 
-        except Exception as e:
-            db.session.rollback()
-            print("❌ Migration failed:", e)
+        db.session.execute(text("""
+            ALTER TABLE "order"
+            ADD COLUMN IF NOT EXISTS product_name VARCHAR(200);
+        """))
+
+        db.session.execute(text("""
+            ALTER TABLE "order"
+            ADD COLUMN IF NOT EXISTS price FLOAT;
+        """))
+
+        db.session.commit()
+
+        print("✅ Migration completed (username fix)")
