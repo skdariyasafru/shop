@@ -5,16 +5,7 @@ from db import db
 def run_migration(app):
     with app.app_context():
 
-        try:
-            # Rename column user → username (safe)
-            db.session.execute(text("""
-                ALTER TABLE cart
-                RENAME COLUMN "user" TO username;
-            """))
-
-        except:
-            pass
-
+       
         try:
             db.session.execute(text("""
                 ALTER TABLE "order"
