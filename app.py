@@ -19,7 +19,7 @@ def create_app():
     # Database setup
     init_db(app)
     create_tables(app)
-    run_migration(app)
+    #run_migration(app)
     # Login manager
     login_manager.init_app(app)
 
