@@ -3,7 +3,8 @@ from flask_login import LoginManager
 from db import init_db
 from db_init import create_tables
 import os
-from models import user, product, cart, order
+from models.models import User, Product, Cart, Order
+
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
