@@ -1,6 +1,22 @@
 from db import db
 from flask_login import UserMixin
 
+class Cart(db.Model):
+    __tablename__ = "cart"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100))
+    product_name = db.Column(db.String(200))
+    price = db.Column(db.Float)
+
+
+class Order(db.Model):
+    __tablename__ = "orders"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100))
+    product_name = db.Column(db.String(200))
+    price = db.Column(db.Float)
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -14,15 +30,4 @@ class Product(db.Model):
     price = db.Column(db.Float)
 
 
-class Cart(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user = db.Column(db.String(100))
-    product_name = db.Column(db.String(200))
-    price = db.Column(db.Float)
 
-
-class Order(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user = db.Column(db.String(100))
-    product_name = db.Column(db.String(200))
-    price = db.Column(db.Float)
