@@ -9,13 +9,13 @@ def run_migration(app):
             # Add username column to cart table if missing
             db.session.execute(text("""
                 ALTER TABLE cart
-                ADD COLUMN IF NOT EXISTS "user" VARCHAR(100);
+                ADD COLUMN IF NOT EXISTS "username" VARCHAR(100);
             """))
 
             # Add username column to order table if missing
             db.session.execute(text("""
-                ALTER TABLE "order"
-                ADD COLUMN IF NOT EXISTS "user" VARCHAR(100);
+                ALTER TABLE "orders"
+                ADD COLUMN IF NOT EXISTS "username" VARCHAR(100);
             """))
 
             db.session.commit()
