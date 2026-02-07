@@ -6,13 +6,7 @@
 
 <body>
 
-<h1>Your Cart</h1>
 
-{% for item in items %}
-  <p>{{ item.product_name }} — ₹{{ item.price }}</p>
-{% endfor %}
-
-<h3>Total: ₹{{ total }}</h3>
 
 <a href="/checkout">
   <button>Checkout</button>
