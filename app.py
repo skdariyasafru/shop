@@ -19,7 +19,6 @@ def create_app():
     # =========================
     init_db(app)
 
-    # Run DB setup inside app context (IMPORTANT for Render)
     with app.app_context():
         create_tables(app)
 
@@ -33,14 +32,18 @@ def create_app():
         return User.query.get(int(user_id))
 
     # =========================
-    # HOME PAGE
+    # HOME PAGE (WITH CATEGORY FILTER)
     # =========================
     @app.route("/")
     def index():
-        products = Product.query.all()
-        user = session.get("user")
+        category = request.args.get("category")
 
-        print("PRODUCTS:", products)
+        if category:
+            products = Product.query.filter_by(category=category).all()
+        else:
+            products = Product.query.all()
+
+        user = session.get("user")
 
         return render_template(
             "index.html",
@@ -49,7 +52,7 @@ def create_app():
         )
 
     # =========================
-    # GET PRODUCTS API
+    # PRODUCTS API
     # =========================
     @app.route("/products")
     def get_products():
@@ -61,7 +64,8 @@ def create_app():
                 "id": p.id,
                 "name": p.name,
                 "price": p.price,
-                "image": p.image
+                "image": p.image,
+                "category": getattr(p, "category", None)
             })
 
         return jsonify(data)
@@ -151,20 +155,6 @@ def create_app():
             items=items,
             total=total
         )
-    @app.route("/")
-    def index():
-        category = request.args.get("category")
-    
-        if category:
-            products = Product.query.filter_by(category=category).all()
-        else:
-            products = Product.query.all()
-    
-        user = session.get("user")
-    
-        return render_template("index.html",
-                               products=products,
-                               user=user)
 
     # =========================
     # CHECKOUT
