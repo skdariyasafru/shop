@@ -17,7 +17,14 @@ def create_app():
     # DATABASE SETUP
     init_db(app)
     create_tables(app)
+    p1 = Product(name="Rice Bag", price=500, image="https://via.placeholder.com/200")
+    p2 = Product(name="Milk", price=50, image="https://via.placeholder.com/200")
+    p3 = Product(name="Oil Bottle", price=120, image="https://via.placeholder.com/200")
 
+    db.session.add_all([p1, p2, p3])
+    db.session.commit()
+
+    print("Products added!")
     # LOGIN MANAGER
     login_manager.init_app(app)
 
