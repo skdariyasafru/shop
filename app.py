@@ -58,6 +58,12 @@ def create_app():
     # =========================
     # REGISTER
     # =========================
+    @app.route("/")
+    def index():
+        products = Product.query.all()   # get all products
+        return render_template("index.html", products=products)
+
+    return app
     @app.route("/register", methods=["GET", "POST"])
     def register():
 
