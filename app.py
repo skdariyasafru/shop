@@ -23,17 +23,6 @@ def create_app():
     with app.app_context():
         create_tables(app)
 
-        # Add sample products only if table is empty
-        if Product.query.count() == 0:
-            p1 = Product(name="Rice Bag", price=500, image="https://via.placeholder.com/200")
-            p2 = Product(name="Milk", price=50, image="https://via.placeholder.com/200")
-            p3 = Product(name="Oil Bottle", price=120, image="https://via.placeholder.com/200")
-
-            db.session.add_all([p1, p2, p3])
-            db.session.commit()
-
-            print("Sample products added!")
-
     # =========================
     # LOGIN MANAGER
     # =========================
