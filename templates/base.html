@@ -5,7 +5,7 @@
     <title>{% block title %}Index Mart{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
+```
 <style>
     body {
         margin: 0;
@@ -33,22 +33,41 @@
         color: white;
         margin-left: 20px;
         text-decoration: none;
-        font-weight: 500;
     }
 
-    /* HERO */
-    .hero {
-        background: linear-gradient(90deg, #ff9900, #ff5f00);
-        color: white;
-        text-align: center;
-        padding: 60px 20px;
-        font-size: 28px;
-        font-weight: bold;
+    /* LAYOUT */
+    .layout {
+        display: flex;
+        min-height: 80vh;
     }
 
-    /* CONTAINER */
-    .container {
-        padding: 30px 40px;
+    /* SIDEBAR */
+    .sidebar {
+        width: 220px;
+        background: white;
+        padding: 20px;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    }
+
+    .sidebar h3 {
+        margin-top: 0;
+    }
+
+    .sidebar a {
+        display: block;
+        padding: 8px 0;
+        color: #333;
+        text-decoration: none;
+    }
+
+    .sidebar a:hover {
+        color: #ff9900;
+    }
+
+    /* MAIN CONTENT */
+    .main {
+        flex: 1;
+        padding: 30px;
     }
 
     /* PRODUCT GRID */
@@ -70,7 +89,6 @@
 
     .card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
     .card img {
@@ -83,7 +101,6 @@
     .price {
         color: #ff5f00;
         font-weight: bold;
-        font-size: 18px;
     }
 
     button {
@@ -94,11 +111,6 @@
         color: white;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
-    }
-
-    button:hover {
-        background: #e68a00;
     }
 
     /* FOOTER */
@@ -107,9 +119,19 @@
         color: white;
         text-align: center;
         padding: 20px;
-        margin-top: 40px;
+    }
+
+    @media (max-width: 768px) {
+        .layout {
+            flex-direction: column;
+        }
+
+        .sidebar {
+            width: 100%;
+        }
     }
 </style>
+```
 
 </head>
 
@@ -118,6 +140,7 @@
 <div class="navbar">
     <div class="logo">🛒 Index Mart</div>
 
+```
 <div class="nav-links">
     {% if user %}
         Welcome {{ user }}
@@ -127,17 +150,34 @@
     {% endif %}
     <a href="/cart">Cart</a>
 </div>
+```
 
 </div>
 
-{% block hero %}{% endblock %}
+<div class="layout">
 
-<div class="container">
+```
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h3>Categories</h3>
+
+    <a href="/">All Products</a>
+    <a href="/?category=Grocery">Grocery</a>
+    <a href="/?category=Electronics">Electronics</a>
+    <a href="/?category=Clothing">Clothing</a>
+    <a href="/?category=Home">Home</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
     {% block content %}{% endblock %}
+</div>
+```
+
 </div>
 
 <div class="footer">
-    © 2026 Index Mart — Professional Ecommerce UI
+    © 2026 Index Mart
 </div>
 
 </body>
