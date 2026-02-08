@@ -14,25 +14,38 @@ def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "secret"
 
+    # =========================
     # DATABASE SETUP
+    # =========================
     init_db(app)
-    create_tables(app)
-    p1 = Product(name="Rice Bag", price=500, image="https://via.placeholder.com/200")
-    p2 = Product(name="Milk", price=50, image="https://via.placeholder.com/200")
-    p3 = Product(name="Oil Bottle", price=120, image="https://via.placeholder.com/200")
 
-    db.session.add_all([p1, p2, p3])
-    db.session.commit()
+    # Run DB setup inside app context (IMPORTANT for Render)
+    with app.app_context():
+        create_tables(app)
 
-    print("Products added!")
+        # Add sample products only if table is empty
+        if Product.query.count() == 0:
+            p1 = Product(name="Rice Bag", price=500, image="https://via.placeholder.com/200")
+            p2 = Product(name="Milk", price=50, image="https://via.placeholder.com/200")
+            p3 = Product(name="Oil Bottle", price=120, image="https://via.placeholder.com/200")
+
+            db.session.add_all([p1, p2, p3])
+            db.session.commit()
+
+            print("Sample products added!")
+
+    # =========================
     # LOGIN MANAGER
+    # =========================
     login_manager.init_app(app)
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # =========================
     # HOME PAGE
+    # =========================
     @app.route("/")
     def index():
         products = Product.query.all()
@@ -46,7 +59,9 @@ def create_app():
             user=user
         )
 
+    # =========================
     # GET PRODUCTS API
+    # =========================
     @app.route("/products")
     def get_products():
         products = Product.query.all()
@@ -62,7 +77,9 @@ def create_app():
 
         return jsonify(data)
 
+    # =========================
     # REGISTER
+    # =========================
     @app.route("/register", methods=["GET", "POST"])
     def register():
         if request.method == "POST":
@@ -78,7 +95,9 @@ def create_app():
 
         return render_template("register.html")
 
+    # =========================
     # LOGIN
+    # =========================
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
@@ -98,13 +117,17 @@ def create_app():
 
         return render_template("login.html")
 
+    # =========================
     # LOGOUT
+    # =========================
     @app.route("/logout")
     def logout():
         session.pop("user", None)
         return redirect("/")
 
+    # =========================
     # ADD TO CART
+    # =========================
     @app.route("/add_to_cart", methods=["POST"])
     def add_to_cart():
         if "user" not in session:
@@ -123,7 +146,9 @@ def create_app():
 
         return jsonify({"msg": "added"})
 
+    # =========================
     # VIEW CART
+    # =========================
     @app.route("/cart")
     def view_cart():
         if "user" not in session:
@@ -138,7 +163,9 @@ def create_app():
             total=total
         )
 
+    # =========================
     # CHECKOUT
+    # =========================
     @app.route("/checkout")
     def checkout():
         if "user" not in session:
@@ -162,6 +189,9 @@ def create_app():
     return app
 
 
+# =========================
+# RUN APP
+# =========================
 app = create_app()
 
 if __name__ == "__main__":
