@@ -30,18 +30,18 @@ def create_app():
         return User.query.get(int(user_id))
 
     # =========================
-    # HOME PAGE
+    # HOME PAGE (LOAD PRODUCTS)
     # =========================
     @app.route("/")
-    def home():
-        return render_template("index.html")
+    def index():
+        products = Product.query.all()
+        return render_template("index.html", products=products)
 
     # =========================
-    # GET PRODUCTS FROM DATABASE
+    # GET PRODUCTS API
     # =========================
     @app.route("/products")
     def get_products():
-
         products = Product.query.all()
 
         data = []
@@ -58,12 +58,6 @@ def create_app():
     # =========================
     # REGISTER
     # =========================
-    @app.route("/")
-    def index():
-        products = Product.query.all()   # get all products
-        return render_template("index.html", products=products)
-
-    return app
     @app.route("/register", methods=["GET", "POST"])
     def register():
 
@@ -118,7 +112,7 @@ def create_app():
     def add_to_cart():
 
         if "user" not in session:
-            return redirect("/login")
+            return jsonify({"msg": "login required"}), 401
 
         data = request.json
 
