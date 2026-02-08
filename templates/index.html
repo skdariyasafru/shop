@@ -33,5 +33,24 @@ function addToCart(name, price) {
     .then(() => alert("Added to cart!"));
 }
 </script>
+<script>
+function addToCart(name, price) {
+    fetch("/add_to_cart", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({name: name, price: price})
+    })
+    .then(res => {
+        if (res.status === 401) {
+            window.location.href = "/login"; // go login if not logged in
+        } else {
+            window.location.href = "/cart";  // go to billing/cart
+        }
+    });
+}
+</script>
+
 
 {% endblock %}
