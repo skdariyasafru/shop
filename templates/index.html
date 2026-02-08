@@ -22,17 +22,7 @@
 
 </div>
 
-<script>
-function addToCart(name, price) {
-    fetch("/add_to_cart", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({name: name, price: price})
-    })
-    .then(res => res.json())
-    .then(() => alert("Added to cart!"));
-}
-</script>
+
 <script>
 function addToCart(name, price) {
     fetch("/add_to_cart", {
