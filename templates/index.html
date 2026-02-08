@@ -9,32 +9,57 @@
             margin: 0;
             background: #f5f5f5;
         }
+/* Modern Header */
+.header {
+    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    color: white;
+    padding: 12px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
 
-```
-    /* Header */
-    .header {
-        background: #ff3f6c;
-        color: white;
-        padding: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+.header h2 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: 1px;
+}
 
-    .search-bar input {
-        width: 300px;
-        padding: 8px;
-        border-radius: 5px;
-        border: none;
-    }
+/* Search bar */
+.search-bar input {
+    width: 320px;
+    padding: 10px 15px;
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    transition: 0.3s;
+}
 
-    .login a {
-        color: white;
-        text-decoration: none;
-        margin-left: 15px;
-        font-weight: bold;
-    }
+.search-bar input:focus {
+    box-shadow: 0 0 5px rgba(255,255,255,0.8);
+}
 
+/* Login links */
+.login a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: 0.3s;
+}
+
+.login a:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+   
     /* Products */
     .products {
         display: grid;
