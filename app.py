@@ -151,6 +151,20 @@ def create_app():
             items=items,
             total=total
         )
+    @app.route("/")
+    def index():
+        category = request.args.get("category")
+    
+        if category:
+            products = Product.query.filter_by(category=category).all()
+        else:
+            products = Product.query.all()
+    
+        user = session.get("user")
+    
+        return render_template("index.html",
+                               products=products,
+                               user=user)
 
     # =========================
     # CHECKOUT
