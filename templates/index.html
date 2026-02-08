@@ -1,169 +1,129 @@
-<!DOCTYPE html>
 
+It breaks Jinja rendering.
+
+---
+
+# ✅ FIXED FULL index.html (copy paste everything)
+
+👉 This version:
+
+✔ Loads real DB products  
+✔ Clean header  
+✔ Shows logged user  
+✔ No broken HTML  
+✔ Dynamic product cards
+
+---
+
+:::writing{variant="standard" id="48291"}
+<!DOCTYPE html>
 <html>
 <head>
-    <title>index  Mart</title>
+    <title>Index Mart</title>
     <style>
         body {
             font-family: Arial;
             margin: 0;
             background: #f5f5f5;
         }
-/* Modern Header */
-.header {
-    background: linear-gradient(90deg, #ff416c, #ff4b2b);
-    color: white;
-    padding: 12px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
 
-.header h2 {
-    margin: 0;
-    font-size: 24px;
-    letter-spacing: 1px;
-}
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
 
-/* Search bar */
-.search-bar input {
-    width: 320px;
-    padding: 10px 15px;
-    border-radius: 25px;
-    border: none;
-    outline: none;
-    font-size: 14px;
-    transition: 0.3s;
-}
+        .search-bar input {
+            width: 320px;
+            padding: 10px;
+            border-radius: 25px;
+            border: none;
+        }
 
-.search-bar input:focus {
-    box-shadow: 0 0 5px rgba(255,255,255,0.8);
-}
+        .login a {
+            color: white;
+            margin-left: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
 
-/* Login links */
-.login a {
-    color: white;
-    text-decoration: none;
-    margin-left: 20px;
-    font-weight: bold;
-    padding: 6px 12px;
-    border-radius: 20px;
-    transition: 0.3s;
-}
+        /* Products */
+        .products {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
 
-.login a:hover {
-    background: rgba(255,255,255,0.2);
-}
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 0 5px #ccc;
+        }
 
-   
-    /* Products */
-    .products {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        padding: 20px;
-    }
+        .card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
 
-    .card {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        text-align: center;
-        box-shadow: 0 0 5px #ccc;
-    }
-
-    .card img {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-    }
-
-    button {
-        background: #ff3f6c;
-        color: white;
-        border: none;
-        padding: 8px;
-        margin-top: 10px;
-        cursor: pointer;
-        border-radius: 5px;
-    }
-
-    button:hover {
-        background: #d92f58;
-    }
-</style>
-```
-
+        button {
+            background: #ff3f6c;
+            color: white;
+            border: none;
+            padding: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 
 <body>
 
 <!-- Header -->
-
 <div class="header">
-    <h2>index</h2>
-    
 
-<div style="display:flex; gap:20px; flex-wrap:wrap;">
+    <h2>🛒 Index Mart</h2>
 
-{% for product in products %}
-    <div style="border:1px solid #ccc; padding:10px; width:200px;">
-        <img src="{{ product.image }}" width="150">
-        <h3>{{ product.name }}</h3>
-        <p>₹{{ product.price }}</p>
+    <div class="search-bar">
+        <input type="text" placeholder="Search products...">
     </div>
-{% endfor %}
 
-</div>
-<div class="search-bar">
-    <input type="text" placeholder="Search products...">
-</div>
-
-<div class="login">
-    <a href="/login">Login</a>
-    <a href="/cart">Cart</a>
-</div>
-```
+    <div class="login">
+        {% if user %}
+            <span>Welcome {{ user }}</span>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
+        <a href="/cart">Cart</a>
+    </div>
 
 </div>
 
 <!-- Product Section -->
-
 <div class="products">
 
-```
-<div class="card">
-    <img src="https://via.placeholder.com/200">
-    <h3>Rice Bag</h3>
-    <p>₹500</p>
-    <button onclick="addToCart('Rice Bag', 500)">Add to Cart</button>
-</div>
-
-<div class="card">
-    <img src="https://via.placeholder.com/200">
-    <h3>Milk</h3>
-    <p>₹50</p>
-    <button onclick="addToCart('Milk', 50)">Add to Cart</button>
-</div>
-
-<div class="card">
-    <img src="https://via.placeholder.com/200">
-    <h3>Oil Bottle</h3>
-    <p>₹120</p>
-    <button onclick="addToCart('Oil Bottle', 120)">Add to Cart</button>
-</div>
-
-<div class="card">
-    <img src="https://via.placeholder.com/200">
-    <h3>Biscuits</h3>
-    <p>₹30</p>
-    <button onclick="addToCart('Biscuits', 30)">Add to Cart</button>
-</div>
-```
+{% for product in products %}
+    <div class="card">
+        <img src="{{ product.image }}">
+        <h3>{{ product.name }}</h3>
+        <p>₹{{ product.price }}</p>
+        <button onclick="addToCart('{{ product.name }}', {{ product.price }})">
+            Add to Cart
+        </button>
+    </div>
+{% endfor %}
 
 </div>
 
@@ -183,3 +143,15 @@ function addToCart(name, price) {
 
 </body>
 </html>
+:::
+
+---
+
+# ✅ Also update app.py index route
+
+```python
+@app.route("/")
+def index():
+    products = Product.query.all()
+    user = session.get("user")
+    return render_template("index.html", products=products, user=user)
