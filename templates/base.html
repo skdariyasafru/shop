@@ -5,7 +5,7 @@
     <title>{% block title %}Index Mart{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
+ 
 <style>
     body {
         margin: 0;
@@ -131,7 +131,7 @@
         }
     }
 </style>
-```
+ 
 
 </head>
 
@@ -140,7 +140,7 @@
 <div class="navbar">
     <div class="logo">🛒 Index Mart</div>
 
-```
+ 
 <div class="nav-links">
     {% if user %}
         Welcome {{ user }}
@@ -150,13 +150,13 @@
     {% endif %}
     <a href="/cart">Cart</a>
 </div>
-```
+ 
 
 </div>
 
 <div class="layout">
 
-```
+ 
 <!-- SIDEBAR -->
 <div class="sidebar">
     <h3>Categories</h3>
@@ -170,7 +170,7 @@
 <div class="main">
     {% block content %}{% endblock %}
 </div>
-```
+ 
 
 </div>
 
