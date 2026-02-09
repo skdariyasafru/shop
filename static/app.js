@@ -88,28 +88,14 @@ function searchProducts() {
 // Add to Cart
 // ===============================
 
-function addToCart(name, price) {
-
-  fetch("/add_to_cart", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: name,
-      price: price
-    })
-  })
-  .then(res => res.json())
-  .then(() => {
-    alert("✅ Added to cart!");
-  })
-  .catch(err => {
-    console.error("Cart error:", err);
-    alert("Login required!");
-  });
-
+function addToCart(id) {
+    fetch("/add_to_cart", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({id: id})
+    }).then(() => window.location = "/cart");
 }
+
 
 
 // ===============================
