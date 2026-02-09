@@ -17,7 +17,7 @@ def create_app():
     app.config["SECRET_KEY"] = "super-secret-key-change-this"
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.permanent_session_lifetime = timedelta(days=7)
+    app.permanent_session_lifetime = timedelta(days=1)
 
     # Database setup
     init_db(app)
