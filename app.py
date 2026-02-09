@@ -9,144 +9,143 @@ import os
 login_manager = LoginManager()
 login_manager.login_view = "login"
 
+
 def create_app():
-app = Flask(**name**)
+    app = Flask(__name__)
 
-```
-# ===== Session Fix for Render =====
-app.config["SECRET_KEY"] = "super-secret-key-change-this"
-app.config["SESSION_COOKIE_SECURE"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.permanent_session_lifetime = timedelta(days=7)
+    # Session config (fix logout issue on Render)
+    app.config["SECRET_KEY"] = "super-secret-key-change-this"
+    app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.permanent_session_lifetime = timedelta(days=7)
 
-# ===== Database setup =====
-init_db(app)
+    # Database setup
+    init_db(app)
 
-with app.app_context():
-    create_tables(app)
+    with app.app_context():
+        create_tables(app)
 
-login_manager.init_app(app)
+    login_manager.init_app(app)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
-# ===== Home =====
-@app.route("/")
-def index():
-    products = Product.query.all()
-    return render_template(
-        "index.html",
-        products=products,
-        user=session.get("user")
-    )
+    # Home page
+    @app.route("/")
+    def index():
+        products = Product.query.all()
+        return render_template(
+            "index.html",
+            products=products,
+            user=session.get("user")
+        )
 
-# ===== Login =====
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        user = User.query.filter_by(
-            username=request.form.get("username"),
-            password=request.form.get("password")
+    # Login
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            user = User.query.filter_by(
+                username=request.form.get("username"),
+                password=request.form.get("password")
+            ).first()
+
+            if user:
+                session.permanent = True
+                session["user"] = user.username
+                return redirect("/")
+
+            return "Invalid login"
+
+        return render_template("login.html")
+
+    # Logout
+    @app.route("/logout")
+    def logout():
+        session.pop("user", None)
+        return redirect("/")
+
+    # Add to cart
+    @app.route("/add_to_cart", methods=["POST"])
+    def add_to_cart():
+        if "user" not in session:
+            return jsonify({"msg": "login required"}), 401
+
+        data = request.json
+        username = session["user"]
+
+        item = Cart.query.filter_by(
+            username=username,
+            product_name=data["name"]
         ).first()
 
-        if user:
-            session.permanent = True
-            session["user"] = user.username
-            return redirect("/")
+        if item:
+            item.quantity += 1
+        else:
+            db.session.add(Cart(
+                username=username,
+                product_name=data["name"],
+                price=data["price"],
+                quantity=1
+            ))
 
-        return "Invalid login"
+        db.session.commit()
+        return jsonify({"msg": "added"})
 
-    return render_template("login.html")
+    # Cart page
+    @app.route("/cart")
+    def cart():
+        if "user" not in session:
+            return redirect("/login")
 
-# ===== Logout =====
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect("/")
+        items = Cart.query.filter_by(username=session["user"]).all()
+        total = sum(i.price * i.quantity for i in items)
 
-# ===== Add to Cart =====
-@app.route("/add_to_cart", methods=["POST"])
-def add_to_cart():
-    if "user" not in session:
-        return jsonify({"msg": "login required"}), 401
+        return render_template("cart.html", items=items, total=total)
 
-    data = request.json
-    username = session["user"]
+    # Checkout
+    @app.route("/checkout", methods=["POST"])
+    def checkout():
+        if "user" not in session:
+            return redirect("/login")
 
-    item = Cart.query.filter_by(
-        username=username,
-        product_name=data["name"]
-    ).first()
+        username = session["user"]
+        cart_items = Cart.query.filter_by(username=username).all()
 
-    if item:
-        item.quantity += 1
-    else:
-        db.session.add(Cart(
-            username=username,
-            product_name=data["name"],
-            price=data["price"],
-            quantity=1
-        ))
+        if not cart_items:
+            return "Cart is empty!"
 
-    db.session.commit()
-    return jsonify({"msg": "added"})
+        for item in cart_items:
+            order = Order(
+                username=username,
+                product_name=item.product_name,
+                price=item.price,
+                quantity=item.quantity,
+                total=item.price * item.quantity
+            )
+            db.session.add(order)
 
-# ===== Cart Page =====
-@app.route("/cart")
-def cart():
-    if "user" not in session:
-        return redirect("/login")
+        Cart.query.filter_by(username=username).delete()
+        db.session.commit()
 
-    items = Cart.query.filter_by(username=session["user"]).all()
-    total = sum(i.price * i.quantity for i in items)
+        return render_template("success.html")
 
-    return render_template("cart.html", items=items, total=total)
+    # Orders page
+    @app.route("/orders")
+    def orders():
+        if "user" not in session:
+            return redirect("/login")
 
-# ===== Checkout =====
-@app.route("/checkout", methods=["POST"])
-def checkout():
-    if "user" not in session:
-        return redirect("/login")
+        user_orders = Order.query.filter_by(
+            username=session["user"]
+        ).all()
 
-    username = session["user"]
-    cart_items = Cart.query.filter_by(username=username).all()
+        return render_template("orders.html", orders=user_orders)
 
-    if not cart_items:
-        return "Cart is empty!"
+    return app
 
-    for item in cart_items:
-        order = Order(
-            username=username,
-            product_name=item.product_name,
-            price=item.price,
-            quantity=item.quantity,
-            total=item.price * item.quantity
-        )
-        db.session.add(order)
-
-    Cart.query.filter_by(username=username).delete()
-    db.session.commit()
-
-    return render_template("success.html")
-
-# ===== Orders Page =====
-@app.route("/orders")
-def orders():
-    if "user" not in session:
-        return redirect("/login")
-
-    user_orders = Order.query.filter_by(
-        username=session["user"]
-    ).all()
-
-    return render_template("orders.html", orders=user_orders)
-
-return app
-```
 
 app = create_app()
 
-if **name** == "**main**":
-port = int(os.environ.get("PORT", 10000))
-app.run(host="0.0.0.0", port=port)
+if __name__ == "__main__":
+    port = i
