@@ -2,23 +2,6 @@ from db import db
 from flask_login import UserMixin
 
 
-
-class Cart(db.Model):
-     __tablename__ = "cart"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
-    product_name = db.Column(db.String(200))
-    price = db.Column(db.Float)
-    quantity = db.Column(db.Integer, default=1)
-
-class Order(db.Model):
-    __tablename__ = "order"
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100))
-    product_name = db.Column(db.String(200))
-    price = db.Column(db.Float)
-
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
@@ -32,5 +15,18 @@ class Product(db.Model):
     image = db.Column(db.String(300))
 
 
+class Cart(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100))
+    product_name = db.Column(db.String(200))
+    price = db.Column(db.Float)
+    quantity = db.Column(db.Integer)
 
 
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100))
+    product_name = db.Column(db.String(200))
+    price = db.Column(db.Float)
+    quantity = db.Column(db.Integer)
+    total = db.Column(db.Float)
