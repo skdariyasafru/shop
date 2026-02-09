@@ -17,7 +17,7 @@ def create_app():
     app.config["SECRET_KEY"] = "super-secret-key-change-this"
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.permanent_session_lifetime = timedelta(days=1)
+    app.permanent_session_lifetime = timedelta(days=7)
 
     # Database setup
     init_db(app)
@@ -148,4 +148,5 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    port = i
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
