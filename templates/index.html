@@ -2,8 +2,6 @@
 
 {% block title %}Home{% endblock %}
 
-
-
 {% block content %}
 
 <div class="grid">
@@ -14,33 +12,41 @@
     <img src="{{ product.image }}">
     <h3>{{ product.name }}</h3>
     <p class="price">₹{{ product.price }}</p>
-    <button onclick="addToCart('{{ product.name }}', {{ product.price }})">
+
+    <button onclick="addToCart({{ product.id }})">
         Add to Cart
     </button>
+
 </div>
+
 {% endfor %}
 
 </div>
 
 
 <script>
-function addToCart(name, price) {
+function addToCart(id) {
     fetch("/add_to_cart", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({name: name, price: price})
+        body: JSON.stringify({ id: id })
     })
     .then(res => {
         if (res.status === 401) {
-            window.location.href = "/login"; // go login if not logged in
+            window.location.href = "/login";
+        } else if (res.ok) {
+            window.location.href = "/cart";
         } else {
-            window.location.href = "/cart";  // go to billing/cart
+            alert("Error adding to cart");
         }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Something went wrong");
     });
 }
 </script>
-
 
 {% endblock %}
