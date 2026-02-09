@@ -15,36 +15,5 @@ def safe_execute(sql):
 def run_migration(app):
     with app.app_context():
 
-        # CART TABLE
-        safe_execute("""
-            ALTER TABLE cart
-            ADD COLUMN IF NOT EXISTS username VARCHAR(100);
-        """)
-
-        safe_execute("""
-            ALTER TABLE cart
-            ADD COLUMN IF NOT EXISTS product_name VARCHAR(200);
-        """)
-
-        safe_execute("""
-            ALTER TABLE cart
-            ADD COLUMN IF NOT EXISTS price FLOAT;
-        """)
-
-        # ORDER TABLE
-        safe_execute("""
-            ALTER TABLE "order"
-            ADD COLUMN IF NOT EXISTS username VARCHAR(100);
-        """)
-
-        safe_execute("""
-            ALTER TABLE "order"
-            ADD COLUMN IF NOT EXISTS product_name VARCHAR(200);
-        """)
-
-        safe_execute("""
-            ALTER TABLE "order"
-            ADD COLUMN IF NOT EXISTS price FLOAT;
-        """)
-
+       
         print("🚀 Migration finished safely")
