@@ -17,10 +17,10 @@ class Product(db.Model):
 
 class Cart(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100))
-    product_name = db.Column(db.String(200))
-    price = db.Column(db.Float)
-    quantity = db.Column(db.Integer)
+    user_id = db.Column(db.Integer)
+    product_id = db.Column(db.Integer)
+    quantity = db.Column(db.Integer, default=1)
+
 
 
 class Order(db.Model):
