@@ -14,15 +14,26 @@
 
 <div class="card">
     <h3>{{ item.product_name }}</h3>
-    <p class="price">₹{{ item.price }}</p>
+
+```
+<p>Quantity: <strong>{{ item.quantity }}</strong></p>
+
+<p class="price">
+    ₹{{ item.price }} × {{ item.quantity }} =
+    <strong>₹{{ item.price * item.quantity }}</strong>
+</p>
+```
+
 </div>
+
 {% endfor %}
 
 </div>
 
 <div class="card" style="margin-top: 30px; max-width: 400px;">
-    <h2>Total: ₹{{ total }}</h2>
 
+```
+<h2>Total: ₹{{ total }}</h2>
 
 <a href="/checkout">
     <button>Proceed to Checkout</button>
@@ -31,7 +42,7 @@
 <a href="/" style="display:block; margin-top:10px;">
     <button style="background:#555;">Continue Shopping</button>
 </a>
-
+```
 
 </div>
 
