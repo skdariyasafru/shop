@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, redirect, session, render_template
-from flask_login import LoginManager
+from flask_login import login_user, logout_user, login_required, current_user
 from db import init_db, db
 from db_init import create_tables
 from models.models import User, Product, Cart, Order
@@ -130,6 +130,33 @@ def create_app():
 
         return render_template("success.html")
 
+
+
+    @app.route("/add_to_cart", methods=["POST"])
+    @login_required
+    def add_to_cart():
+        data = request.json
+        product_id = data["id"]
+    
+        item = Cart.query.filter_by(
+            user_id=current_user.id,
+            product_id=product_id
+        ).first()
+    
+        if item:
+            item.quantity += 1
+        else:
+            db.session.add(Cart(
+                user_id=current_user.id,
+                product_id=product_id,
+                quantity=1
+            ))
+    
+        db.session.commit()
+        return jsonify({"msg": "added"})
+    
+
+    
     # Orders page
     @app.route("/orders")
     def orders():
