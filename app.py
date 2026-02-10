@@ -14,21 +14,36 @@ from db_init import create_tables
 from models.models import User, Product, Cart, Order
 
 
+def seed_products():
+    """Add sample products if database is empty"""
+    if Product.query.count() == 0:
+        print("Seeding sample products...")
+
+        products = [
+            Product(name="Phone", price=15000, image="https://via.placeholder.com/200"),
+            Product(name="Laptop", price=50000, image="https://via.placeholder.com/200"),
+            Product(name="Headphones", price=2000, image="https://via.placeholder.com/200"),
+        ]
+
+        db.session.add_all(products)
+        db.session.commit()
+
+
 def create_app():
     app = Flask(__name__)
 
     # ================= CONFIG =================
     app.config["SECRET_KEY"] = "super-secret-key-change-this"
-
-    # IMPORTANT: must be FALSE for browser / localhost / GitHub
     app.config["SESSION_COOKIE_SECURE"] = False
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.permanent_session_lifetime = timedelta(days=1)
 
-    # ================= DB =================
+    # ================= DATABASE =================
     init_db(app)
+
     with app.app_context():
         create_tables(app)
+        seed_products()  # 👈 auto add products
 
     # ================= LOGIN MANAGER =================
     login_manager = LoginManager()
@@ -39,11 +54,24 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # ================= DEBUG ROUTE =================
+    @app.route("/testdb")
+    def testdb():
+        try:
+            count = Product.query.count()
+            return f"Database working ✅ | Products: {count}"
+        except Exception as e:
+            return f"DB ERROR: {e}"
+
     # ================= HOME =================
     @app.route("/")
     def index():
-        products = Product.query.all()
-        return render_template("index.html", products=products)
+        try:
+            products = Product.query.all()
+            print("DEBUG PRODUCTS:", products)
+            return render_template("index.html", products=products)
+        except Exception as e:
+            return f"Error loading products: {e}"
 
     # ================= LOGIN =================
     @app.route("/login", methods=["GET", "POST"])
@@ -62,7 +90,10 @@ def create_app():
                 session.permanent = True
                 return redirect("/")
 
-            return render_template("login.html", error="Invalid username or password")
+            return render_template(
+                "login.html",
+                error="Invalid username or password"
+            )
 
         return render_template("login.html")
 
@@ -156,6 +187,7 @@ def create_app():
         orders = Order.query.filter_by(
             username=current_user.username
         ).all()
+
         return render_template("orders.html", orders=orders)
 
     return app
