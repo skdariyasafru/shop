@@ -1,30 +1,38 @@
-from flask import Flask, request, jsonify, redirect, render_template
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from db import init_db, db
-from db_init import create_tables
-from models.models import User, Product, Cart, Order
+from flask import Flask, request, jsonify, redirect, render_template, session
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    login_required,
+    current_user
+)
 from datetime import timedelta
 import os
 
-login_manager = LoginManager()
-login_manager.login_view = "login"
+from db import init_db, db
+from db_init import create_tables
+from models.models import User, Product, Cart, Order
 
 
 def create_app():
     app = Flask(__name__)
 
-    # Session config (Render friendly)
+    # ================= CONFIG =================
     app.config["SECRET_KEY"] = "super-secret-key-change-this"
-    app.config["SESSION_COOKIE_SECURE"] = True
+
+    # IMPORTANT: must be FALSE for browser / localhost / GitHub
+    app.config["SESSION_COOKIE_SECURE"] = False
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.permanent_session_lifetime = timedelta(days=1)
 
-    # Database setup
+    # ================= DB =================
     init_db(app)
-
     with app.app_context():
         create_tables(app)
 
+    # ================= LOGIN MANAGER =================
+    login_manager = LoginManager()
+    login_manager.login_view = "login"
     login_manager.init_app(app)
 
     @login_manager.user_loader
@@ -41,16 +49,20 @@ def create_app():
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
+            username = request.form.get("username")
+            password = request.form.get("password")
+
             user = User.query.filter_by(
-                username=request.form.get("username"),
-                password=request.form.get("password")
+                username=username,
+                password=password
             ).first()
 
             if user:
                 login_user(user)
+                session.permanent = True
                 return redirect("/")
 
-            return "Invalid login"
+            return render_template("login.html", error="Invalid username or password")
 
         return render_template("login.html")
 
@@ -76,16 +88,18 @@ def create_app():
         if item:
             item.quantity += 1
         else:
-            db.session.add(Cart(
-                user_id=current_user.id,
-                product_id=product_id,
-                quantity=1
-            ))
+            db.session.add(
+                Cart(
+                    user_id=current_user.id,
+                    product_id=product_id,
+                    quantity=1
+                )
+            )
 
         db.session.commit()
         return jsonify({"msg": "added"})
 
-    # ================= CART PAGE =================
+    # ================= CART =================
     @app.route("/cart")
     @login_required
     def cart():
@@ -115,19 +129,20 @@ def create_app():
         cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
         if not cart_items:
-            return "Cart is empty!"
+            return "Cart is empty"
 
         for item in cart_items:
             product = Product.query.get(item.product_id)
 
-            order = Order(
-                username=current_user.username,
-                product_name=product.name,
-                price=product.price,
-                quantity=item.quantity,
-                total=product.price * item.quantity
+            db.session.add(
+                Order(
+                    username=current_user.username,
+                    product_name=product.name,
+                    price=product.price,
+                    quantity=item.quantity,
+                    total=product.price * item.quantity
+                )
             )
-            db.session.add(order)
 
         Cart.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
@@ -138,11 +153,10 @@ def create_app():
     @app.route("/orders")
     @login_required
     def orders():
-        user_orders = Order.query.filter_by(
+        orders = Order.query.filter_by(
             username=current_user.username
         ).all()
-
-        return render_template("orders.html", orders=user_orders)
+        return render_template("orders.html", orders=orders)
 
     return app
 
@@ -151,4 +165,4 @@ app = create_app()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
