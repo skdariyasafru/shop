@@ -192,6 +192,16 @@ def create_app():
             })
 
         return render_template("cart.html", items=cart_data, total=total)
+    # ================= VIEW ORDERS =================
+    @app.route("/my_orders")
+    @login_required
+    def my_orders():
+    
+        orders = Order.query.filter_by(
+            username=current_user.username
+        ).all()
+    
+        return render_template("orders.html", orders=orders)
 
     # ================= CHECKOUT =================
     # ================= CHECKOUT =================
