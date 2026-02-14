@@ -33,20 +33,24 @@ function addToCart(productId) {
     })
     .then(response => {
         if (response.status === 401) {
-            openLogin();  // 🔥 open popup instead of refresh
+            openLogin();  // Open login popup
             return;
         }
         return response.json();
     })
     .then(data => {
         if (data && data.status === "added") {
-            window.location.href = "/cart";
+
+            // ✅ Show success message
+            showToast("Product added to cart!");
+
         }
     })
     .catch(error => {
         console.error("Error:", error);
     });
 }
+
 
 window.onclick = function(event) {
     if (event.target == document.getElementById("loginModal")) {
