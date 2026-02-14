@@ -1,152 +1,99 @@
-
 <!DOCTYPE html>
-
 <html>
 <head>
     <title>{% block title %}Index Mart{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
- 
- 
 <style>
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', Arial;
-        background: #f5f6fa;
-    }
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial;
+    background: #f5f6fa;
+}
 
-    /* NAVBAR */
-    .navbar {
-        background: #131921;
-        color: white;
-        padding: 14px 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+/* NAVBAR */
+.navbar {
+    background: #131921;
+    color: white;
+    padding: 14px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-    .logo {
-        font-size: 22px;
-        font-weight: bold;
-        color: #ff9900;
-    }
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ff9900;
+}
 
-    .nav-links a {
-        color: white;
-        margin-left: 20px;
-        text-decoration: none;
-    }
+.nav-links a {
+    color: white;
+    margin-left: 20px;
+    text-decoration: none;
+}
 
-    /* LAYOUT */
-    .layout {
-        display: flex;
-        min-height: 80vh;
-    }
+/* LAYOUT */
+.layout {
+    display: flex;
+    min-height: 80vh;
+}
 
-    /* SIDEBAR */
-    .sidebar {
-        width: 220px;
-        background: white;
-        padding: 20px;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-    }
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    background: white;
+    padding: 20px;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
 
-    .sidebar h3 {
-        margin-top: 0;
-    }
+.sidebar a {
+    display: block;
+    padding: 8px 0;
+    color: #333;
+    text-decoration: none;
+}
 
-    .sidebar a {
-        display: block;
-        padding: 8px 0;
-        color: #333;
-        text-decoration: none;
-    }
+.sidebar a:hover {
+    color: #ff9900;
+}
 
-    .sidebar a:hover {
-        color: #ff9900;
-    }
+/* MAIN */
+.main {
+    flex: 1;
+    padding: 30px;
+}
 
-    /* MAIN CONTENT */
-    .main {
-        flex: 1;
-        padding: 30px;
-    }
+/* FOOTER */
+.footer {
+    background: #131921;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
 
-    /* PRODUCT GRID */
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-        gap: 25px;
-    }
+/* FLASH MESSAGE */
+.flash-message {
+    background: #ffe6e6;
+    color: #b30000;
+    padding: 12px;
+    margin: 10px 40px;
+    border-radius: 6px;
+    font-weight: bold;
+}
 
-    /* CARD */
-    .card {
-        background: white;
-        border-radius: 12px;
-        padding: 15px;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: 0.3s;
-    }
-
-    .card:hover {
-        transform: translateY(-5px);
-    }
-
-    .card img {
-        width: 100%;
-        height: 180px;
-        object-fit: cover;
-        border-radius: 8px;
-    }
-
-    .price {
-        color: #ff5f00;
-        font-weight: bold;
-    }
-
-    button {
-        background: #ff9900;
-        border: none;
-        padding: 10px;
-        width: 100%;
-        color: white;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-
-    /* FOOTER */
-    .footer {
-        background: #131921;
-        color: white;
-        text-align: center;
-        padding: 20px;
-    }
-
-    @media (max-width: 768px) {
-        .layout {
-            flex-direction: column;
-        }
-
-        .sidebar {
-            width: 100%;
-        }
-    }
-  /* MODAL STYLE */
+/* MODAL */
 .modal {
     display: none;
     position: fixed;
     z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(0,0,0,0.6);
 }
 
 .modal-content {
     background: white;
-    width: 350px;
+    width: 360px;
     padding: 30px;
     margin: 120px auto;
     border-radius: 10px;
@@ -160,309 +107,14 @@
     margin-bottom: 15px;
 }
 
-.close {
-    position: absolute;
-    right: 15px;
-    top: 10px;
-    font-size: 22px;
+.modal-content button {
+    background: #ff9900;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    color: white;
+    border-radius: 8px;
     cursor: pointer;
-}
-
-/* error style
-    */
- .error-box {
-    background: #ffe6e6;
-    color: #b30000;
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    font-size: 14px;
-}
-.error-box a {
-    color: #0066c0;
-    font-weight: bold;
-}
-.flash-message {
-    background: #ffe6e6;
-    color: #b30000;
-    padding: 12px;
-    margin: 10px 40px;
-    border-radius: 6px;
-    font-weight: bold;
-}
-
-</style>
- 
- 
-
-</head>
-<!-- LOGIN MODAL -->
-<div id="loginModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeLogin()">&times;</span>
-
-        <h2>Login</h2>
-        <form method="POST" action="/login">
-
-    {% if login_error %}
-        <div class="error-box">
-            {{ login_error }}
-            <br>
-            <a href="/register">Create account</a>
-        </div>
-    {% endif %}
-
-    <label>Email or Username</label>
-    <input type="text" name="username" required>
-
-    <label>Password</label>
-    <input type="password" name="password" required>
-
-    <button type="submit" class="login-btn">Sign In</button>
-</form>
-
-    </div>
-</div>
-<script>
-function openLogin() {
-    document.getElementById("loginModal").style.display = "block";
-}
-
-function closeLogin() {
-    document.getElementById("loginModal").style.display = "none";
-}
-
-window.onclick = function(event) {
-    let modal = document.getElementById("loginModal");
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-}
-</script>
-
-<body>
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-      <div class="flash-message">
-          {{ messages[-1] }}
-      </div>
-  {% endif %}
-{% endwith %}
-
-
-<div class="navbar">
-    <div class="logo">🛒 Index Mart</div>
-
- 
- 
-<div class="nav-links">
-    {% if current_user.is_authenticated %}
-        Welcome {{ current_user.username }}
-        <a href="/logout">Logout</a>
-    {% else %}
-        <a href="#" onclick="openLogin()">Login</a>
-    {% endif %}
-    <a href="/cart">Cart</a>
-</div>
-
- 
-
-</div>
-
-<div class="layout">
-
- 
- 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h3>Categories</h3>
-
-    <a href="/">All Products</a>
-    <p style="color:gray;">Categories coming soon...</p>
-
-</div>
-
-<!-- MAIN CONTENT -->
-<div class="main">
-    {% block content %}{% endblock %}
-</div>
- 
- 
-
-</div>
-
-<div class="footer">
-    © 2026 Index Mart
-</div>
-<script>
-window.onload = function() {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("login") === "1") {
-        openLogin();
-    }
-};
-</script>
-
-</body>
-</html><!DOCTYPE html>
-
-<html>
-<head>
-    <title>{% block title %}Index Mart{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
- 
- 
-<style>
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', Arial;
-        background: #f5f6fa;
-    }
-
-    /* NAVBAR */
-    .navbar {
-        background: #131921;
-        color: white;
-        padding: 14px 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .logo {
-        font-size: 22px;
-        font-weight: bold;
-        color: #ff9900;
-    }
-
-    .nav-links a {
-        color: white;
-        margin-left: 20px;
-        text-decoration: none;
-    }
-
-    /* LAYOUT */
-    .layout {
-        display: flex;
-        min-height: 80vh;
-    }
-
-    /* SIDEBAR */
-    .sidebar {
-        width: 220px;
-        background: white;
-        padding: 20px;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-    }
-
-    .sidebar h3 {
-        margin-top: 0;
-    }
-
-    .sidebar a {
-        display: block;
-        padding: 8px 0;
-        color: #333;
-        text-decoration: none;
-    }
-
-    .sidebar a:hover {
-        color: #ff9900;
-    }
-
-    /* MAIN CONTENT */
-    .main {
-        flex: 1;
-        padding: 30px;
-    }
-
-    /* PRODUCT GRID */
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-        gap: 25px;
-    }
-
-    /* CARD */
-    .card {
-        background: white;
-        border-radius: 12px;
-        padding: 15px;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: 0.3s;
-    }
-
-    .card:hover {
-        transform: translateY(-5px);
-    }
-
-    .card img {
-        width: 100%;
-        height: 180px;
-        object-fit: cover;
-        border-radius: 8px;
-    }
-
-    .price {
-        color: #ff5f00;
-        font-weight: bold;
-    }
-
-    button {
-        background: #ff9900;
-        border: none;
-        padding: 10px;
-        width: 100%;
-        color: white;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-
-    /* FOOTER */
-    .footer {
-        background: #131921;
-        color: white;
-        text-align: center;
-        padding: 20px;
-    }
-
-    @media (max-width: 768px) {
-        .layout {
-            flex-direction: column;
-        }
-
-        .sidebar {
-            width: 100%;
-        }
-    }
-  /* MODAL STYLE */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-}
-
-.modal-content {
-    background: white;
-    width: 350px;
-    padding: 30px;
-    margin: 120px auto;
-    border-radius: 10px;
-    position: relative;
-    text-align: center;
-}
-
-.modal-content input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
 }
 
 .close {
@@ -472,80 +124,12 @@ window.onload = function() {
     font-size: 22px;
     cursor: pointer;
 }
-
-/* error style
-    */
- .error-box {
-    background: #ffe6e6;
-    color: #b30000;
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    font-size: 14px;
-}
-.error-box a {
-    color: #0066c0;
-    font-weight: bold;
-}
-.flash-message {
-    background: #ffe6e6;
-    color: #b30000;
-    padding: 12px;
-    margin: 10px 40px;
-    border-radius: 6px;
-    font-weight: bold;
-}
-
 </style>
- 
- 
-
 </head>
-<!-- LOGIN MODAL -->
-<div id="loginModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeLogin()">&times;</span>
-
-        <h2>Login</h2>
-        <form method="POST" action="/login">
-
-    {% if login_error %}
-        <div class="error-box">
-            {{ login_error }}
-            <br>
-            <a href="/register">Create account</a>
-        </div>
-    {% endif %}
-
-    <label>Email or Username</label>
-    <input type="text" name="username" required>
-
-    <label>Password</label>
-    <input type="password" name="password" required>
-
-    <button type="submit" class="login-btn">Sign In</button>
-</form>
-
-    </div>
-</div>
-<script>
-function openLogin() {
-    document.getElementById("loginModal").style.display = "block";
-}
-
-function closeLogin() {
-    document.getElementById("loginModal").style.display = "none";
-}
-
-window.onclick = function(event) {
-    let modal = document.getElementById("loginModal");
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-}
-</script>
 
 <body>
+
+<!-- FLASH MESSAGE -->
 {% with messages = get_flashed_messages() %}
   {% if messages %}
       <div class="flash-message">
@@ -554,58 +138,107 @@ window.onclick = function(event) {
   {% endif %}
 {% endwith %}
 
-
+<!-- NAVBAR -->
 <div class="navbar">
     <div class="logo">🛒 Index Mart</div>
 
- 
- 
-<div class="nav-links">
-    {% if current_user.is_authenticated %}
-        Welcome {{ current_user.username }}
-        <a href="/logout">Logout</a>
-    {% else %}
-        <a href="#" onclick="openLogin()">Login</a>
-    {% endif %}
-    <a href="/cart">Cart</a>
+    <div class="nav-links">
+        {% if current_user.is_authenticated %}
+            Welcome {{ current_user.username }}
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="#" onclick="openLogin()">Login</a>
+        {% endif %}
+        <a href="/cart">Cart</a>
+    </div>
 </div>
 
- 
-
-</div>
-
+<!-- LAYOUT -->
 <div class="layout">
 
- 
- 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h3>Categories</h3>
+    <div class="sidebar">
+        <h3>Categories</h3>
+        <a href="/">All Products</a>
+        <p style="color:gray;">Categories coming soon...</p>
+    </div>
 
-    <a href="/">All Products</a>
-    <p style="color:gray;">Categories coming soon...</p>
-
-</div>
-
-<!-- MAIN CONTENT -->
-<div class="main">
-    {% block content %}{% endblock %}
-</div>
- 
- 
+    <div class="main">
+        {% block content %}{% endblock %}
+    </div>
 
 </div>
 
 <div class="footer">
     © 2026 Index Mart
 </div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeLogin()">&times;</span>
+        <h2>Login</h2>
+
+        <form method="POST" action="/login">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Sign In</button>
+
+            <p style="margin-top:15px;">
+                New user?
+                <a href="#" onclick="switchToRegister()" style="color:#ff9900; font-weight:bold;">
+                    Register here
+                </a>
+            </p>
+        </form>
+    </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeRegister()">&times;</span>
+        <h2>Create Account</h2>
+
+        <form method="POST" action="/register">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Register</button>
+
+            <p style="margin-top:15px;">
+                Already have account?
+                <a href="#" onclick="switchToLogin()" style="color:#ff9900; font-weight:bold;">
+                    Login
+                </a>
+            </p>
+        </form>
+    </div>
+</div>
+
 <script>
-window.onload = function() {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("login") === "1") {
-        openLogin();
-    }
-};
+function openLogin() {
+    document.getElementById("loginModal").style.display = "block";
+}
+function closeLogin() {
+    document.getElementById("loginModal").style.display = "none";
+}
+function openRegister() {
+    document.getElementById("registerModal").style.display = "block";
+}
+function closeRegister() {
+    document.getElementById("registerModal").style.display = "none";
+}
+function switchToRegister() {
+    closeLogin();
+    openRegister();
+}
+function switchToLogin() {
+    closeRegister();
+    openLogin();
+}
+window.onclick = function(event) {
+    if (event.target == document.getElementById("loginModal")) closeLogin();
+    if (event.target == document.getElementById("registerModal")) closeRegister();
+}
 </script>
 
 </body>
