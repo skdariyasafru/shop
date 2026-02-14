@@ -34,12 +34,12 @@
 
     <div class="nav-links">
         {% if current_user.is_authenticated %}
-            Welcome {{ current_user.username }}
-            <a href="/logout">Logout</a>
-        {% else %}
-            <a href="#" onclick="openLogin()">Login</a>
-        {% endif %}
-        <a href="/cart">Cart</a>
+    Welcome {{ current_user.username }}
+    <a href="/my_orders">My Orders</a>
+    <a href="/logout">Logout</a>
+{% else %}
+    <a href="#" onclick="openLogin()">Login</a>
+{% endif %}
     </div>
 
 </div>
