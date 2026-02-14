@@ -40,20 +40,22 @@ def create_app():
 
     # ================= LOGIN =================
     @app.route("/login", methods=["GET", "POST"])
+    @app.route("/login", methods=["POST"])
     def login():
-        if request.method == "POST":
-            user = User.query.filter_by(
-                username=request.form.get("username"),
-                password=request.form.get("password")
-            ).first()
 
-            if user:
-                login_user(user)
-                return redirect("/")
+        username = request.form.get("username")
+        password = request.form.get("password")
+    
+        user = User.query.filter_by(username=username).first()
 
-            return "Invalid login"
+        if user and user.password == password:
+            login_user(user)
+            return redirect("/")
 
-        return render_template("login.html")
+        return render_template("index.html", 
+                           products=Product.query.all(),
+                           login_error="User not found. Please register.")
+
 
     # ================= LOGOUT =================
     @app.route("/logout")
