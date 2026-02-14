@@ -4,127 +4,8 @@
     <title>{% block title %}Index Mart{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Arial;
-    background: #f5f6fa;
-}
-
-/* NAVBAR */
-.navbar {
-    background: #131921;
-    color: white;
-    padding: 14px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    font-size: 22px;
-    font-weight: bold;
-    color: #ff9900;
-}
-
-.nav-links a {
-    color: white;
-    margin-left: 20px;
-    text-decoration: none;
-}
-
-/* LAYOUT */
-.layout {
-    display: flex;
-    min-height: 80vh;
-}
-
-/* SIDEBAR */
-.sidebar {
-    width: 220px;
-    background: white;
-    padding: 20px;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-}
-
-.sidebar a {
-    display: block;
-    padding: 8px 0;
-    color: #333;
-    text-decoration: none;
-}
-
-.sidebar a:hover {
-    color: #ff9900;
-}
-
-/* MAIN */
-.main {
-    flex: 1;
-    padding: 30px;
-}
-
-/* FOOTER */
-.footer {
-    background: #131921;
-    color: white;
-    text-align: center;
-    padding: 20px;
-}
-
-/* FLASH MESSAGE */
-.flash-message {
-    background: #ffe6e6;
-    color: #b30000;
-    padding: 12px;
-    margin: 10px 40px;
-    border-radius: 6px;
-    font-weight: bold;
-}
-
-/* MODAL */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-}
-
-.modal-content {
-    background: white;
-    width: 360px;
-    padding: 30px;
-    margin: 120px auto;
-    border-radius: 10px;
-    position: relative;
-    text-align: center;
-}
-
-.modal-content input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-}
-
-.modal-content button {
-    background: #ff9900;
-    border: none;
-    padding: 10px;
-    width: 100%;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.close {
-    position: absolute;
-    right: 15px;
-    top: 10px;
-    font-size: 22px;
-    cursor: pointer;
-}
-</style>
+    <!-- External CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
@@ -214,32 +95,8 @@ body {
     </div>
 </div>
 
-<script>
-function openLogin() {
-    document.getElementById("loginModal").style.display = "block";
-}
-function closeLogin() {
-    document.getElementById("loginModal").style.display = "none";
-}
-function openRegister() {
-    document.getElementById("registerModal").style.display = "block";
-}
-function closeRegister() {
-    document.getElementById("registerModal").style.display = "none";
-}
-function switchToRegister() {
-    closeLogin();
-    openRegister();
-}
-function switchToLogin() {
-    closeRegister();
-    openLogin();
-}
-window.onclick = function(event) {
-    if (event.target == document.getElementById("loginModal")) closeLogin();
-    if (event.target == document.getElementById("registerModal")) closeRegister();
-}
-</script>
+<!-- External JS -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 </body>
 </html>
