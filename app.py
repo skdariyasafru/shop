@@ -108,17 +108,18 @@ def create_app():
 
     # ================= ADD TO CART =================
     @app.route("/add_to_cart", methods=["POST"])
-    @login_required
     def add_to_cart():
-
+        if not current_user.is_authenticated:
+            return jsonify({"status": "login_required"}), 401
+    
         data = request.json
         product_id = data["id"]
-
+    
         item = Cart.query.filter_by(
             user_id=current_user.id,
             product_id=product_id
         ).first()
-
+    
         if item:
             item.quantity += 1
         else:
@@ -127,9 +128,11 @@ def create_app():
                 product_id=product_id,
                 quantity=1
             ))
-
+    
         db.session.commit()
-        return jsonify({"msg": "added"})
+    
+        return jsonify({"status": "added"})
+
 
     # ================= CART =================
     @app.route("/cart")
