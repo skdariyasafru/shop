@@ -42,13 +42,16 @@ def create_app():
     # ================= HOME =================
     @app.route("/")
     def index():
-        products = Product.query.all()
+        search_query = request.args.get("q")
+    
+        if search_query:
+            products = Product.query.filter(
+                Product.name.ilike(f"%{search_query}%")
+            ).all()
+        else:
+            products = Product.query.all()
+    
         return render_template("index.html", products=products)
-
-    # ================= LOGIN PAGE (GET) =================
-    @app.route("/login", methods=["GET"])
-    def login_page():
-        return redirect("/")  # Login modal handled on home page
 
     # ================= LOGIN (POST) =================
     @app.route("/login", methods=["POST"])
