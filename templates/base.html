@@ -181,6 +181,14 @@
     color: #0066c0;
     font-weight: bold;
 }
+.flash-message {
+    background: #ffe6e6;
+    color: #b30000;
+    padding: 12px;
+    margin: 10px 40px;
+    border-radius: 6px;
+    font-weight: bold;
+}
 
 </style>
  
@@ -232,6 +240,15 @@ window.onclick = function(event) {
 </script>
 
 <body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash-message">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
 <div class="navbar">
     <div class="logo">🛒 Index Mart</div>
