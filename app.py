@@ -37,7 +37,7 @@ def create_app():
     # 🔥 Redirect unauthorized users to register page
     @login_manager.unauthorized_handler
     def unauthorized():
-        return redirect("/register")
+        return redirect("/?login=1")
 
     # ================= HOME =================
     @app.route("/")
