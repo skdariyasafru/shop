@@ -235,10 +235,24 @@
 
         <h2>Login</h2>
         <form method="POST" action="/login">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
+
+    {% if login_error %}
+        <div class="error-box">
+            {{ login_error }}
+            <br>
+            <a href="/register">Create account</a>
+        </div>
+    {% endif %}
+
+    <label>Email or Username</label>
+    <input type="text" name="username" required>
+
+    <label>Password</label>
+    <input type="password" name="password" required>
+
+    <button type="submit" class="login-btn">Sign In</button>
+</form>
+
     </div>
 </div>
 <script>
