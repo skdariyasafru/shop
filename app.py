@@ -1,5 +1,4 @@
-
-from flask import Flask, request, jsonify, redirect, render_template, flash
+from flask import Flask, request, jsonify, redirect, render_template, flash, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
 from db_init import create_tables
@@ -8,25 +7,28 @@ from datetime import timedelta
 import os
 
 login_manager = LoginManager()
-login_manager.login_view = "login"
 
 
 def create_app():
     app = Flask(__name__)
 
-    # Session config (Render friendly)
+    # ================= CONFIG =================
     app.config["SECRET_KEY"] = "super-secret-key-change-this"
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.permanent_session_lifetime = timedelta(days=1)
 
-    # Database setup
+    # ================= DATABASE =================
     init_db(app)
 
     with app.app_context():
         create_tables(app)
 
+    # ================= LOGIN MANAGER =================
     login_manager.init_app(app)
+    login_manager.login_view = "login"
+    login_manager.login_message = None  # 🔥 disable default "Please log in" message
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -41,31 +43,59 @@ def create_app():
     # ================= LOGIN =================
     @app.route("/login", methods=["POST"])
     def login():
+
+        # 🔥 Clear old flash messages
+        session.pop('_flashes', None)
+
         username = request.form.get("username")
         password = request.form.get("password")
-    
+
         user = User.query.filter_by(username=username).first()
-    
+
         if not user:
-            session.pop('_flashes', None)
             flash("User not found. Please register.")
             return redirect("/register")
-    
+
         if user.password != password:
-            session.pop('_flashes', None)
             flash("Incorrect password.")
             return redirect("/")
-    
-        session.pop('_flashes', None)   # ✅ clear old flashes
+
         login_user(user)
+
+        # 🔥 Clear flashes again after success
+        session.pop('_flashes', None)
+
         return redirect("/")
 
+    # ================= REGISTER =================
+    @app.route("/register", methods=["GET", "POST"])
+    def register():
+
+        if request.method == "POST":
+            session.pop('_flashes', None)
+
+            username = request.form.get("username")
+            password = request.form.get("password")
+
+            if User.query.filter_by(username=username).first():
+                flash("User already exists.")
+                return redirect("/")
+
+            new_user = User(username=username, password=password)
+            db.session.add(new_user)
+            db.session.commit()
+
+            flash("Registration successful. Please login.")
+            return redirect("/")
+
+        return render_template("register.html")
 
     # ================= LOGOUT =================
     @app.route("/logout")
     @login_required
     def logout():
         logout_user()
+        session.pop('_flashes', None)
         return redirect("/")
 
     # ================= ADD TO CART =================
@@ -92,7 +122,7 @@ def create_app():
         db.session.commit()
         return jsonify({"msg": "added"})
 
-    # ================= CART PAGE =================
+    # ================= CART =================
     @app.route("/cart")
     @login_required
     def cart():
@@ -122,7 +152,8 @@ def create_app():
         cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
         if not cart_items:
-            return "Cart is empty!"
+            flash("Cart is empty.")
+            return redirect("/")
 
         for item in cart_items:
             product = Product.query.get(item.product_id)
@@ -139,6 +170,7 @@ def create_app():
         Cart.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
 
+        flash("Order placed successfully!")
         return render_template("success.html")
 
     # ================= ORDERS =================
