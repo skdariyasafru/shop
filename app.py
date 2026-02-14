@@ -21,7 +21,6 @@ def create_app():
 
     # ================= DATABASE =================
     init_db(app)
-
     with app.app_context():
         create_tables(app)
 
@@ -34,7 +33,6 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # 🔥 If not logged in → open login popup
     @login_manager.unauthorized_handler
     def unauthorized():
         return redirect("/?login=1")
@@ -56,7 +54,6 @@ def create_app():
     # ================= LOGIN =================
     @app.route("/login", methods=["POST"])
     def login():
-
         session.pop('_flashes', None)
 
         username = request.form.get("username")
@@ -73,14 +70,11 @@ def create_app():
             return redirect("/?login=1")
 
         login_user(user)
-        session.pop('_flashes', None)
-
         return redirect("/")
 
     # ================= REGISTER =================
     @app.route("/register", methods=["POST"])
     def register():
-
         session.pop('_flashes', None)
 
         username = request.form.get("username")
@@ -102,18 +96,16 @@ def create_app():
     @login_required
     def logout():
         logout_user()
-        session.pop('_flashes', None)
         return redirect("/")
 
-    # ================= ADD TO CART (AJAX) =================
+    # ================= ADD TO CART =================
     @app.route("/add_to_cart", methods=["POST"])
     def add_to_cart():
-
         if not current_user.is_authenticated:
             return jsonify({"status": "login_required"}), 401
 
         data = request.json
-        product_id = data["id"]
+        product_id = data.get("id")
 
         item = Cart.query.filter_by(
             user_id=current_user.id,
@@ -133,14 +125,13 @@ def create_app():
 
         return jsonify({"status": "added"})
 
-    # ================= UPDATE CART QUANTITY =================
+    # ================= UPDATE CART (AJAX) =================
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
-
         data = request.json
-        product_id = data["id"]
-        action = data["action"]
+        product_id = data.get("id")
+        action = data.get("action")
 
         item = Cart.query.filter_by(
             user_id=current_user.id,
@@ -148,26 +139,40 @@ def create_app():
         ).first()
 
         if not item:
-            return jsonify({"error": "Item not found"}), 404
+            return jsonify({"status": "error"})
 
         if action == "increase":
             item.quantity += 1
-
         elif action == "decrease":
             if item.quantity > 1:
                 item.quantity -= 1
             else:
                 db.session.delete(item)
+                db.session.commit()
+                return jsonify({"removed": True})
 
         db.session.commit()
 
-        return jsonify({"status": "updated"})
+        product = Product.query.get(product_id)
+        subtotal = product.price * item.quantity
 
-    # ================= CART =================
+        items = Cart.query.filter_by(user_id=current_user.id).all()
+        total = sum(
+            Product.query.get(i.product_id).price * i.quantity
+            for i in items
+        )
+
+        return jsonify({
+            "status": "updated",
+            "quantity": item.quantity,
+            "subtotal": subtotal,
+            "total": total
+        })
+
+    # ================= CART PAGE =================
     @app.route("/cart")
     @login_required
     def cart():
-
         items = Cart.query.filter_by(user_id=current_user.id).all()
 
         cart_data = []
@@ -189,7 +194,7 @@ def create_app():
         return render_template("cart.html", items=cart_data, total=total)
 
     # ================= CHECKOUT =================
-    @app.route("/checkout", methods=["POST"])
+    @app.route("/checkout")
     @login_required
     def checkout():
 
@@ -221,7 +226,6 @@ def create_app():
     @app.route("/orders")
     @login_required
     def orders():
-
         user_orders = Order.query.filter_by(
             username=current_user.username
         ).all()
@@ -233,7 +237,6 @@ def create_app():
 
 app = create_app()
 
-# ================= RUN LOCAL =================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
