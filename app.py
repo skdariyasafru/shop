@@ -62,7 +62,7 @@ def create_app():
         user = User.query.filter_by(username=username).first()
 
         if not user:
-            flash("User not found. Please register.")
+            flash("User not found.")
             return redirect("/?login=1")
 
         if user.password != password:
@@ -125,7 +125,7 @@ def create_app():
 
         return jsonify({"status": "added"})
 
-    # ================= UPDATE CART (AJAX) =================
+    # ================= UPDATE CART =================
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
@@ -192,59 +192,45 @@ def create_app():
             })
 
         return render_template("cart.html", items=cart_data, total=total)
+
+    # ================= CHECKOUT =================
+    @app.route("/checkout")
+    @login_required
+    def checkout():
+
+        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+
+        if not cart_items:
+            flash("Cart is empty.")
+            return redirect("/")
+
+        for item in cart_items:
+            product = Product.query.get(item.product_id)
+
+            order = Order(
+                username=current_user.username,
+                product_name=product.name,
+                price=product.price,
+                quantity=item.quantity,
+                total=product.price * item.quantity
+            )
+            db.session.add(order)
+
+        Cart.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+
+        flash("Order placed successfully!")
+        return redirect("/")
+
     # ================= VIEW ORDERS =================
     @app.route("/my_orders")
     @login_required
     def my_orders():
-    
         orders = Order.query.filter_by(
             username=current_user.username
         ).all()
-    
+
         return render_template("orders.html", orders=orders)
-
-    # ================= CHECKOUT =================
-    # ================= CHECKOUT =================
-@app.route("/checkout")
-@login_required
-def checkout():
-
-    cart_items = Cart.query.filter_by(user_id=current_user.id).all()
-
-    if not cart_items:
-        flash("Cart is empty.")
-        return redirect("/")
-
-    for item in cart_items:
-        product = Product.query.get(item.product_id)
-
-        order = Order(
-            username=current_user.username,
-            product_name=product.name,
-            price=product.price,
-            quantity=item.quantity,
-            total=product.price * item.quantity
-        )
-        db.session.add(order)
-
-    # Clear cart
-    Cart.query.filter_by(user_id=current_user.id).delete()
-    db.session.commit()
-
-    flash("Order placed successfully!")
-
-    # ✅ Redirect to home (user stays logged in)
-    return redirect("/")
-
-    # ================= ORDERS =================
-    @app.route("/orders")
-    @login_required
-    def orders():
-        user_orders = Order.query.filter_by(
-            username=current_user.username
-        ).all()
-
-        return render_template("orders.html", orders=user_orders)
 
     return app
 
