@@ -47,15 +47,17 @@ def create_app():
         password = request.form.get("password")
     
         user = User.query.filter_by(username=username).first()
-
-        if user and user.password == password:
-            login_user(user)
+    
+        if not user:
+            flash("User not found. Please register.", "danger")
+            return redirect("/register")
+    
+        if user.password != password:
+            flash("Incorrect password.", "danger")
             return redirect("/")
-
-        return render_template("index.html", 
-                           products=Product.query.all(),
-                           login_error="User not found. Please register.")
-
+    
+        login_user(user)
+        return redirect("/")
 
     # ================= LOGOUT =================
     @app.route("/logout")
