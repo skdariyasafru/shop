@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
