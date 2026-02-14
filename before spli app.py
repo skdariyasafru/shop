@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, redirect, render_template
+
+from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
 from db_init import create_tables
@@ -40,19 +41,22 @@ def create_app():
     # ================= LOGIN =================
     @app.route("/login", methods=["GET", "POST"])
     def login():
-        if request.method == "POST":
-            user = User.query.filter_by(
-                username=request.form.get("username"),
-                password=request.form.get("password")
-            ).first()
+        username = request.form.get("username")
+        password = request.form.get("password")
+    
+        user = User.query.filter_by(username=username).first()
+    
+        if not user:
+            flash("User not found. Please register.")
+            return redirect("/register")
+    
+        if user.password != password:
+            flash("Incorrect password.")
+            return redirect("/")
+    
+        login_user(user)
+        return redirect("/")
 
-            if user:
-                login_user(user)
-                return redirect("/")
-
-            return "Invalid login"
-
-        return render_template("login.html")
 
     # ================= LOGOUT =================
     @app.route("/logout")
