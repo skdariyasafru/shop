@@ -1,11 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{% block title %}Index Mart{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <!-- External CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <div class="navbar">
+    <div class="logo">🛒 Index Mart</div>
+
+    <!-- SEARCH BAR -->
+    <form action="/" method="GET" style="flex:1; margin: 0 30px;">
+        <input type="text" name="q"
+               placeholder="Search products..."
+               value="{{ request.args.get('q','') }}"
+               style="width:100%; padding:8px; border-radius:5px; border:none;">
+    </form>
+
+    <div class="nav-links">
+        {% if current_user.is_authenticated %}
+            Welcome {{ current_user.username }}
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="#" onclick="openLogin()">Login</a>
+        {% endif %}
+        <a href="/cart">Cart</a>
+    </div>
+</div>
+
 </head>
 
 <body>
