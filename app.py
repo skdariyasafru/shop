@@ -41,20 +41,22 @@ def create_app():
     # ================= LOGIN =================
     @app.route("/login", methods=["POST"])
     def login():
-        session.pop('_flashes', None) 
         username = request.form.get("username")
         password = request.form.get("password")
     
         user = User.query.filter_by(username=username).first()
     
         if not user:
+            session.pop('_flashes', None)
             flash("User not found. Please register.")
             return redirect("/register")
     
         if user.password != password:
+            session.pop('_flashes', None)
             flash("Incorrect password.")
             return redirect("/")
     
+        session.pop('_flashes', None)   # ✅ clear old flashes
         login_user(user)
         return redirect("/")
 
