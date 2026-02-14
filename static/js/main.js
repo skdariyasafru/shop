@@ -23,7 +23,9 @@ function switchToLogin() {
     closeRegister();
     openLogin();
 }
-function addToCart(productId) {
+// add item
+function addToCart(productId, button) {
+
     fetch("/add_to_cart", {
         method: "POST",
         headers: {
@@ -33,7 +35,7 @@ function addToCart(productId) {
     })
     .then(response => {
         if (response.status === 401) {
-            openLogin();  // Open login popup
+            openLogin();
             return;
         }
         return response.json();
@@ -41,15 +43,25 @@ function addToCart(productId) {
     .then(data => {
         if (data && data.status === "added") {
 
-            // ✅ Show success message
-            showToast("Product added to cart!");
+            // 🔥 Change button text
+            button.innerText = "Added ✓";
 
+            // 🔥 Disable button
+            button.disabled = true;
+
+            // 🔥 Change button color
+            button.style.background = "#28a745";
+            button.style.cursor = "not-allowed";
         }
     })
     .catch(error => {
         console.error("Error:", error);
     });
 }
+
+
+
+//end item
 
 
 window.onclick = function(event) {
