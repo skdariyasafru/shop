@@ -1,35 +1,65 @@
 {% extends "base.html" %}
-
-{% block title %}Cart{% endblock %}
+{% block title %}Your Cart{% endblock %}
 
 {% block content %}
 
 <h2>Your Cart</h2>
 
-<table border="1" cellpadding="10">
-    <tr>
-        <th>Product</th>
-        <th>Price</th>
-        <th>Quantity</th>
-        <th>Subtotal</th>
-    </tr>
+{% if items %}
+
+<div class="cart-container">
 
     {% for item in items %}
-    <tr>
-        <td>{{ item.name }}</td>
-        <td>₹{{ item.price }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>₹{{ item.subtotal }}</td>
-    </tr>
+    <div class="cart-item" data-id="{{ item.id }}">
+        <div class="cart-info">
+            <h3>{{ item.name }}</h3>
+            <p>₹{{ item.price }}</p>
+        </div>
+
+        <div class="quantity-box">
+            <button onclick="updateQty({{ item.product_id }}, 'decrease')">−</button>
+            <span id="qty-{{ item.product_id }}">{{ item.quantity }}</span>
+            <button onclick="updateQty({{ item.product_id }}, 'increase')">+</button>
+        </div>
+
+        <div class="subtotal">
+            ₹<span id="subtotal-{{ item.product_id }}">
+                {{ item.price * item.quantity }}
+            </span>
+        </div>
+    </div>
     {% endfor %}
-</table>
 
-<h3>Total: ₹{{ total }}</h3>
+</div>
 
-<form action="/checkout" method="post">
-    <button type="submit">Checkout</button>
-</form>
+<h3>Total: ₹<span id="cart-total">{{ total }}</span></h3>
 
-<a href="/">← Continue Shopping</a>
+<button onclick="location.href='/checkout'" class="checkout-btn">
+    Proceed to Checkout
+</button>
+
+{% else %}
+<p>Your cart is empty.</p>
+{% endif %}
+
+<script>
+function updateQty(productId, action) {
+
+    fetch("/update_cart", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            id: productId,
+            action: action
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            location.reload(); // simple refresh for now
+        }
+    });
+}
+</script>
 
 {% endblock %}
