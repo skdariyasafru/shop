@@ -293,6 +293,14 @@ window.onclick = function(event) {
 <div class="footer">
     © 2026 Index Mart
 </div>
+<script>
+window.onload = function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("login") === "1") {
+        openLogin();
+    }
+};
+</script>
 
 </body>
 </html>
