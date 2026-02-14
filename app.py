@@ -13,7 +13,7 @@ def create_app():
     app = Flask(__name__)
 
     # ================= CONFIG =================
-    app.config["SECRET_KEY"] = "super-secret-key-change-this"
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "super-secret-key-change-this")
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -28,11 +28,16 @@ def create_app():
     # ================= LOGIN MANAGER =================
     login_manager.init_app(app)
     login_manager.login_view = "login"
-    login_manager.login_message = None  # 🔥 disable default "Please log in" message
+    login_manager.login_message = None  # Disable default message
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    # 🔥 Redirect unauthorized users to register page
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return redirect("/register")
 
     # ================= HOME =================
     @app.route("/")
@@ -40,11 +45,15 @@ def create_app():
         products = Product.query.all()
         return render_template("index.html", products=products)
 
-    # ================= LOGIN =================
+    # ================= LOGIN PAGE (GET) =================
+    @app.route("/login", methods=["GET"])
+    def login_page():
+        return redirect("/")  # Login modal handled on home page
+
+    # ================= LOGIN (POST) =================
     @app.route("/login", methods=["POST"])
     def login():
 
-        # 🔥 Clear old flash messages
         session.pop('_flashes', None)
 
         username = request.form.get("username")
@@ -61,8 +70,6 @@ def create_app():
             return redirect("/")
 
         login_user(user)
-
-        # 🔥 Clear flashes again after success
         session.pop('_flashes', None)
 
         return redirect("/")
@@ -72,6 +79,7 @@ def create_app():
     def register():
 
         if request.method == "POST":
+
             session.pop('_flashes', None)
 
             username = request.form.get("username")
@@ -102,6 +110,7 @@ def create_app():
     @app.route("/add_to_cart", methods=["POST"])
     @login_required
     def add_to_cart():
+
         data = request.json
         product_id = data["id"]
 
@@ -126,6 +135,7 @@ def create_app():
     @app.route("/cart")
     @login_required
     def cart():
+
         items = Cart.query.filter_by(user_id=current_user.id).all()
 
         cart_data = []
@@ -149,6 +159,7 @@ def create_app():
     @app.route("/checkout", methods=["POST"])
     @login_required
     def checkout():
+
         cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
         if not cart_items:
@@ -177,6 +188,7 @@ def create_app():
     @app.route("/orders")
     @login_required
     def orders():
+
         user_orders = Order.query.filter_by(
             username=current_user.username
         ).all()
@@ -188,6 +200,7 @@ def create_app():
 
 app = create_app()
 
+# ================= RUN LOCAL =================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
