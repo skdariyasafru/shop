@@ -28,13 +28,13 @@ def create_app():
     # ================= LOGIN MANAGER =================
     login_manager.init_app(app)
     login_manager.login_view = "login"
-    login_manager.login_message = None  # Disable default message
+    login_manager.login_message = None
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # 🔥 Redirect unauthorized users to register page
+    # 🔥 If not logged in → open login popup
     @login_manager.unauthorized_handler
     def unauthorized():
         return redirect("/?login=1")
@@ -43,17 +43,17 @@ def create_app():
     @app.route("/")
     def index():
         search_query = request.args.get("q")
-    
+
         if search_query:
             products = Product.query.filter(
                 Product.name.ilike(f"%{search_query}%")
             ).all()
         else:
             products = Product.query.all()
-    
+
         return render_template("index.html", products=products)
 
-    # ================= LOGIN (POST) =================
+    # ================= LOGIN =================
     @app.route("/login", methods=["POST"])
     def login():
 
@@ -66,11 +66,11 @@ def create_app():
 
         if not user:
             flash("User not found. Please register.")
-            return redirect("/register")
+            return redirect("/?login=1")
 
         if user.password != password:
             flash("Incorrect password.")
-            return redirect("/")
+            return redirect("/?login=1")
 
         login_user(user)
         session.pop('_flashes', None)
@@ -78,28 +78,24 @@ def create_app():
         return redirect("/")
 
     # ================= REGISTER =================
-    @app.route("/register", methods=["GET", "POST"])
+    @app.route("/register", methods=["POST"])
     def register():
 
-        if request.method == "POST":
+        session.pop('_flashes', None)
 
-            session.pop('_flashes', None)
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-            username = request.form.get("username")
-            password = request.form.get("password")
+        if User.query.filter_by(username=username).first():
+            flash("User already exists.")
+            return redirect("/?login=1")
 
-            if User.query.filter_by(username=username).first():
-                flash("User already exists.")
-                return redirect("/")
+        new_user = User(username=username, password=password)
+        db.session.add(new_user)
+        db.session.commit()
 
-            new_user = User(username=username, password=password)
-            db.session.add(new_user)
-            db.session.commit()
-
-            flash("Registration successful. Please login.")
-            return redirect("/")
-
-        return render_template("register.html")
+        flash("Registration successful. Please login.")
+        return redirect("/?login=1")
 
     # ================= LOGOUT =================
     @app.route("/logout")
@@ -109,20 +105,21 @@ def create_app():
         session.pop('_flashes', None)
         return redirect("/")
 
-    # ================= ADD TO CART =================
+    # ================= ADD TO CART (AJAX) =================
     @app.route("/add_to_cart", methods=["POST"])
     def add_to_cart():
+
         if not current_user.is_authenticated:
             return jsonify({"status": "login_required"}), 401
-    
+
         data = request.json
         product_id = data["id"]
-    
+
         item = Cart.query.filter_by(
             user_id=current_user.id,
             product_id=product_id
         ).first()
-    
+
         if item:
             item.quantity += 1
         else:
@@ -131,11 +128,40 @@ def create_app():
                 product_id=product_id,
                 quantity=1
             ))
-    
+
         db.session.commit()
-    
+
         return jsonify({"status": "added"})
 
+    # ================= UPDATE CART QUANTITY =================
+    @app.route("/update_cart", methods=["POST"])
+    @login_required
+    def update_cart():
+
+        data = request.json
+        product_id = data["id"]
+        action = data["action"]
+
+        item = Cart.query.filter_by(
+            user_id=current_user.id,
+            product_id=product_id
+        ).first()
+
+        if not item:
+            return jsonify({"error": "Item not found"}), 404
+
+        if action == "increase":
+            item.quantity += 1
+
+        elif action == "decrease":
+            if item.quantity > 1:
+                item.quantity -= 1
+            else:
+                db.session.delete(item)
+
+        db.session.commit()
+
+        return jsonify({"status": "updated"})
 
     # ================= CART =================
     @app.route("/cart")
@@ -153,6 +179,7 @@ def create_app():
             total += subtotal
 
             cart_data.append({
+                "product_id": product.id,
                 "name": product.name,
                 "price": product.price,
                 "quantity": item.quantity,
