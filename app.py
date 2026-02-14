@@ -39,8 +39,9 @@ def create_app():
         return render_template("index.html", products=products)
 
     # ================= LOGIN =================
-    @app.route("/login", methods=["GET", "POST"])
+    @app.route("/login", methods=["POST"])
     def login():
+        session.pop('_flashes', None) 
         username = request.form.get("username")
         password = request.form.get("password")
     
