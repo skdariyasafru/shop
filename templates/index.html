@@ -12,9 +12,14 @@
     <img src="{{ product.image }}">
     <h3>{{ product.name }}</h3>
     <p class="price">₹{{ product.price }}</p>
-<button onclick="addToCart({{ product.id }})">
+
+    //buuton
+    
+    <button onclick="addToCart({{ product.id }}, this)">
     Add to Cart
 </button>
+
+
 
     
 </div>
