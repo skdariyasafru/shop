@@ -194,33 +194,37 @@ def create_app():
         return render_template("cart.html", items=cart_data, total=total)
 
     # ================= CHECKOUT =================
-    @app.route("/checkout")
-    @login_required
-    def checkout():
+    # ================= CHECKOUT =================
+@app.route("/checkout")
+@login_required
+def checkout():
 
-        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+    cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
-        if not cart_items:
-            flash("Cart is empty.")
-            return redirect("/")
+    if not cart_items:
+        flash("Cart is empty.")
+        return redirect("/")
 
-        for item in cart_items:
-            product = Product.query.get(item.product_id)
+    for item in cart_items:
+        product = Product.query.get(item.product_id)
 
-            order = Order(
-                username=current_user.username,
-                product_name=product.name,
-                price=product.price,
-                quantity=item.quantity,
-                total=product.price * item.quantity
-            )
-            db.session.add(order)
+        order = Order(
+            username=current_user.username,
+            product_name=product.name,
+            price=product.price,
+            quantity=item.quantity,
+            total=product.price * item.quantity
+        )
+        db.session.add(order)
 
-        Cart.query.filter_by(user_id=current_user.id).delete()
-        db.session.commit()
+    # Clear cart
+    Cart.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
 
-        flash("Order placed successfully!")
-        return render_template("success.html")
+    flash("Order placed successfully!")
+
+    # ✅ Redirect to home (user stays logged in)
+    return redirect("/")
 
     # ================= ORDERS =================
     @app.route("/orders")
