@@ -39,7 +39,6 @@ def create_app():
 
     # ================= LOGIN =================
     @app.route("/login", methods=["GET", "POST"])
-    @app.route("/login", methods=["POST"])
     def login():
         username = request.form.get("username")
         password = request.form.get("password")
