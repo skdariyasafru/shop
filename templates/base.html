@@ -34,12 +34,14 @@
 
     <div class="nav-links">
         {% if current_user.is_authenticated %}
-    Welcome {{ current_user.username }}
-    <a href="/my_orders">My Orders</a>
-    <a href="/logout">Logout</a>
-{% else %}
-    <a href="#" onclick="openLogin()">Login</a>
-{% endif %}
+            <span>Welcome {{ current_user.username }}</span>
+            <a href="/cart">Cart</a>
+            <a href="/my_orders">My Orders</a>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="#" onclick="openLogin()">Login</a>
+            <a href="/cart">Cart</a>
+        {% endif %}
     </div>
 
 </div>
@@ -47,18 +49,21 @@
 <!-- LAYOUT -->
 <div class="layout">
 
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <h3>Categories</h3>
         <a href="/">All Products</a>
         <p style="color:gray;">Categories coming soon...</p>
     </div>
 
+    <!-- MAIN CONTENT -->
     <div class="main">
         {% block content %}{% endblock %}
     </div>
 
 </div>
 
+<!-- FOOTER -->
 <div class="footer">
     © 2026 Index Mart
 </div>
