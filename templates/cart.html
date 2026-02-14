@@ -1,39 +1,79 @@
-@app.route("/update_cart", methods=["POST"])
-@login_required
-def update_cart():
+{% extends "base.html" %}
+{% block title %}Your Cart{% endblock %}
 
-    data = request.json
-    product_id = data["id"]
-    action = data["action"]
+{% block content %}
 
-    item = Cart.query.filter_by(
-        user_id=current_user.id,
-        product_id=product_id
-    ).first()
+<h2>Your Cart</h2>
 
-    if not item:
-        return jsonify({"status": "error"})
+{% if items %}
 
-    if action == "increase":
-        item.quantity += 1
-    elif action == "decrease" and item.quantity > 1:
-        item.quantity -= 1
+<div class="cart-container">
 
-    db.session.commit()
+    {% for item in items %}
+    <div class="cart-item">
 
-    product = Product.query.get(product_id)
-    subtotal = product.price * item.quantity
+        <div>
+            <h3>{{ item.name }}</h3>
+            <p>₹{{ item.price }}</p>
+        </div>
 
-    # Calculate new total
-    items = Cart.query.filter_by(user_id=current_user.id).all()
-    total = sum(
-        Product.query.get(i.product_id).price * i.quantity
-        for i in items
-    )
+        <div class="quantity-box">
+            <button onclick="updateQty({{ item.product_id }}, 'decrease')">−</button>
 
-    return jsonify({
-        "status": "updated",
-        "quantity": item.quantity,
-        "subtotal": subtotal,
-        "total": total
+            <span id="qty-{{ item.product_id }}">
+                {{ item.quantity }}
+            </span>
+
+            <button onclick="updateQty({{ item.product_id }}, 'increase')">+</button>
+        </div>
+
+        <div>
+            ₹<span id="subtotal-{{ item.product_id }}">
+                {{ item.subtotal }}
+            </span>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+<h3>Total: ₹<span id="cart-total">{{ total }}</span></h3>
+
+<a href="/checkout" class="checkout-btn">
+    Proceed to Checkout
+</a>
+
+{% else %}
+<p>Your cart is empty.</p>
+{% endif %}
+
+<script>
+function updateQty(productId, action) {
+
+    fetch("/update_cart", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            id: productId,
+            action: action
+        })
     })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.removed){
+            location.reload();
+            return;
+        }
+
+        if(data.status === "updated"){
+            document.getElementById("qty-" + productId).innerText = data.quantity;
+            document.getElementById("subtotal-" + productId).innerText = data.subtotal;
+            document.getElementById("cart-total").innerText = data.total;
+        }
+    });
+}
+</script>
+
+{% endblock %}
