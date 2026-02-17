@@ -1,12 +1,8 @@
-@@ -1,77 +1,251 @@
-
-from flask import Flask, request, redirect, render_template, flash, session
 from flask import Flask, request, jsonify, redirect, render_template, flash, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
 from db_init import create_tables
 from models.models import User, Product, Cart, Order
-from config import ADMIN_USERNAME, ADMIN_PASSWORD
 from config import Config, ADMIN_USERNAME, ADMIN_PASSWORD
 import uuid
 
@@ -16,13 +12,11 @@ login_manager = LoginManager()
 def create_app():
 
     app = Flask(__name__)
-    app.config.from_object("config.Config")
     app.config.from_object(Config)
 
     # ================= INIT DATABASE =================
 
     init_db(app)
-    create_tables(app)
 
     with app.app_context():
         create_tables(app)
@@ -45,7 +39,6 @@ def create_app():
 
     @app.route("/")
     def index():
-        products = Product.query.all()
 
         search = request.args.get("q")
 
@@ -68,9 +61,6 @@ def create_app():
 
         user = User.query.filter_by(username=username).first()
 
-        if user and user.password == password:
-            login_user(user)
-            return redirect("/")
         if not user:
             flash("User not found")
             return redirect("/?login=1")
@@ -83,7 +73,6 @@ def create_app():
 
         flash("Login successful")
 
-        flash("Invalid login")
         return redirect("/")
 
     # ================= REGISTER =================
@@ -97,7 +86,6 @@ def create_app():
         address = request.form.get("address")
         referral = request.form.get("referral")
 
-        ref_code = str(uuid.uuid4())[:8]
         # check exists
         if User.query.filter_by(username=username).first():
             flash("User already exists")
@@ -110,8 +98,6 @@ def create_app():
             password=password,
             phone=phone,
             address=address,
-            referral_code=ref_code,
-            referred_by=referral
             referral_code=referral_code,
             referred_by=referral,
             points=0
@@ -120,7 +106,6 @@ def create_app():
         db.session.add(user)
         db.session.commit()
 
-        flash("Registered successfully")
         flash("Registration successful")
 
         return redirect("/?login=1")
@@ -250,9 +235,7 @@ def create_app():
     @app.route("/checkout")
     @login_required
     def checkout():
-        cart = Cart.query.filter_by(user_id=current_user.id).all()
 
-        for item in cart:
         cart_items = Cart.query.filter_by(
             user_id=current_user.id
         ).all()
@@ -266,7 +249,14 @@ def create_app():
             product = Product.query.get(item.product_id)
 
             order = Order(
-@@ -86,45 +260,86 @@ def checkout():
+                username=current_user.username,
+                phone=current_user.phone,
+                address=current_user.address,
+                product_name=product.name,
+                price=product.price,
+                quantity=item.quantity,
+                total=product.price * item.quantity
+            )
 
             db.session.add(order)
 
@@ -275,8 +265,6 @@ def create_app():
 
         db.session.commit()
 
-        flash("Order placed")
-        return redirect("/")
         flash("Order placed successfully")
 
         return redirect("/my_orders")
@@ -286,11 +274,7 @@ def create_app():
     @app.route("/my_orders")
     @login_required
     def my_orders():
-        orders = Order.query.filter_by(username=current_user.username).all()
-        return render_template("orders.html", orders=orders)
 
-    @app.route("/admin", methods=["GET","POST"])
-    def admin_login():
         orders = Order.query.filter_by(
             username=current_user.username
         ).order_by(Order.id.desc()).all()
@@ -332,7 +316,6 @@ def create_app():
 
         orders = Order.query.all()
 
-        return render_template("admin/dashboard.html", products=products, orders=orders)
         users = User.query.all()
 
         return render_template(
@@ -359,5 +342,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run()
     app.run(debug=True)
