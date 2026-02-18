@@ -5,6 +5,7 @@ from db_init import create_tables
 from models.models import User, Product, Cart, Order
 from config import Config, ADMIN_USERNAME, ADMIN_PASSWORD
 import uuid
+from datetime import datetime
 
 login_manager = LoginManager()
 
@@ -231,22 +232,29 @@ def create_app():
         )
 
     # ================= CHECKOUT =================
+   
+    
     @app.route("/checkout")
     @login_required
     def checkout():
     
-        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+        cart_items = Cart.query.filter_by(
+            user_id=current_user.id
+        ).all()
     
         if not cart_items:
-            flash("Cart is empty")
+            flash("Cart empty")
             return redirect("/")
+    
+        # 🔥 Create one unique order number for entire cart
+        order_number = "ORD-" + datetime.now().strftime("%Y%m%d%H%M%S")
     
         for item in cart_items:
     
             product = Product.query.get(item.product_id)
     
             order = Order(
-                order_number=str(uuid.uuid4())[:10].upper(),
+                order_number=order_number,
     
                 username=current_user.username,
                 phone=current_user.phone,
@@ -270,7 +278,7 @@ def create_app():
     
         flash("Order placed successfully!")
         return redirect("/my_orders")
-    
+
      
     # ================= MY ORDERS =================
     @app.route("/my_orders")
