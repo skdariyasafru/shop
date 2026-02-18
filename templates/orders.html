@@ -1,39 +1,31 @@
 {% extends "base.html" %}
-{% block title %}My Orders{% endblock %}
-
 {% block content %}
 
 <h2>My Orders</h2>
 
-{% if orders %}
-
-<table style="width:100%; border-collapse: collapse;">
+<table border="1" cellpadding="8" style="width:100%">
 <tr>
     <th>Order No</th>
-    <th>Product</th>
-    <th>Qty</th>
     <th>Total</th>
     <th>Status</th>
-    <th>Payment</th>
     <th>Date</th>
 </tr>
 
-{% for order in orders %}
+{% for order in orders|groupby('order_number') %}
 <tr>
-    <td>{{ order.order_number }}</td>
-    <td>{{ order.product_name }}</td>
-    <td>{{ order.quantity }}</td>
-    <td>₹{{ order.total }}</td>
-    <td>{{ order.status }}</td>
-    <td>{{ order.payment_status }}</td>
-    <td>{{ order.created_at.strftime('%d-%m-%Y') }}</td>
+    <td>
+        <a href="/order/{{ order.grouper }}">
+            {{ order.grouper }}
+        </a>
+    </td>
+    <td>
+        ₹{{ order.list | sum(attribute='total') }}
+    </td>
+    <td>{{ order.list[0].status }}</td>
+    <td>{{ order.list[0].created_at.strftime('%d-%m-%Y') }}</td>
 </tr>
 {% endfor %}
 
 </table>
-
-{% else %}
-<p>No orders yet.</p>
-{% endif %}
 
 {% endblock %}
