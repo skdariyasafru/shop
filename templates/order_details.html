@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Order Details</h2>
+
+<h3>Order Number: {{ order_number }}</h3>
+
+<table border="1" cellpadding="8" style="width:100%">
+<tr>
+    <th>Product</th>
+    <th>Price</th>
+    <th>Qty</th>
+    <th>Total</th>
+</tr>
+
+{% for order in orders %}
+<tr>
+    <td>{{ order.product_name }}</td>
+    <td>₹{{ order.price }}</td>
+    <td>{{ order.quantity }}</td>
+    <td>₹{{ order.total }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<a href="/my_orders">⬅ Back to Orders</a>
+
+{% endblock %}
