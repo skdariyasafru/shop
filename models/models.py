@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from db import db
 from flask_login import UserMixin
@@ -33,15 +34,24 @@ class Cart(db.Model):
     quantity = db.Column(db.Integer, default=1)
 
 
-class Order(db.Model):
-    __tablename__ = "order"
 
+class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
+    order_number = db.Column(db.String(20), unique=True)
+
     username = db.Column(db.String(100))
     phone = db.Column(db.String(20))
     address = db.Column(db.Text)
+
     product_name = db.Column(db.String(200))
     price = db.Column(db.Float)
     quantity = db.Column(db.Integer)
     total = db.Column(db.Float)
+
+    payment_method = db.Column(db.String(50), default="COD")
+    payment_status = db.Column(db.String(50), default="Pending")
+
     status = db.Column(db.String(50), default="Pending")
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
