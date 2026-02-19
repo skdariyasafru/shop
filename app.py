@@ -312,8 +312,32 @@ def create_app():
         )
 
     # ================= ADMIN LOGIN =================
+    # ================= USER PROFILE =================
 
+    @app.route("/profile")
+    @login_required
+    def profile():
     
+        # Network count (how many users referred by this user)
+        network_count = User.query.filter_by(
+            referred_by=current_user.referral_code
+        ).count()
+    
+        # Total PV (points from orders)
+        total_pv = current_user.points or 0
+    
+        # Wallet example (you can customize)
+        wallet_balance = total_pv * 2  # example logic
+    
+        return render_template(
+            "profile.html",
+            user=current_user,
+            network_count=network_count,
+            total_pv=total_pv,
+            wallet_balance=wallet_balance
+        )
+    
+        
 
     # ================= ADMIN LOGOUT =================
 
