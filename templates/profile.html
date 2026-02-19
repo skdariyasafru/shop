@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="max-width:1000px;margin:auto;padding:20px;">
+
+    <h2>Dashboard</h2>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+
+        <!-- USER INFO -->
+        <div style="flex:1;background:#f1f5f9;padding:20px;border-radius:10px;">
+            <h3>User Information</h3>
+            <p><strong>Name:</strong> {{ user.username }}</p>
+            <p><strong>Phone:</strong> {{ user.phone }}</p>
+            <p><strong>Address:</strong> {{ user.address }}</p>
+            <p><strong>Referral Code:</strong> {{ user.referral_code }}</p>
+            <p><strong>Referred By:</strong> {{ user.referred_by }}</p>
+        </div>
+
+        <!-- STATS -->
+        <div style="flex:1;background:#e0f2fe;padding:20px;border-radius:10px;">
+            <h3>Statistics</h3>
+            <p><strong>Total PV:</strong> {{ total_pv }}</p>
+            <p><strong>Network Count:</strong> {{ network_count }}</p>
+            <p><strong>Wallet Balance:</strong> ₹{{ wallet_balance }}</p>
+        </div>
+
+    </div>
+
+    <br>
+
+    <div style="background:#fef9c3;padding:20px;border-radius:10px;">
+        <h3>Quick Actions</h3>
+        <a href="/my_orders">My Orders</a> |
+        <a href="/cart">My Cart</a> |
+        <a href="/logout">Logout</a>
+    </div>
+
+</div>
+
+{% endblock %}
