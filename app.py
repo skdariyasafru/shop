@@ -313,44 +313,7 @@ def create_app():
 
     # ================= ADMIN LOGIN =================
 
-    @app.route("/admin", methods=["GET", "POST"])
-    def admin():
-
-        if request.method == "POST":
-
-            username = request.form.get("username")
-            password = request.form.get("password")
-
-            if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-
-                session["admin"] = True
-
-                return redirect("/admin/dashboard")
-
-            flash("Invalid admin login")
-
-        return render_template("admin/login.html")
-
-    # ================= ADMIN DASHBOARD =================
-
-    @app.route("/admin/dashboard")
-    def admin_dashboard():
-
-        if not session.get("admin"):
-            return redirect("/admin")
-
-        products = Product.query.all()
-
-        orders = Order.query.all()
-
-        users = User.query.all()
-
-        return render_template(
-            "admin/dashboard.html",
-            products=products,
-            orders=orders,
-            users=users
-        )
+    
 
     # ================= ADMIN LOGOUT =================
 
