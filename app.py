@@ -151,8 +151,16 @@ def create_app():
         db.session.commit()
 
         return jsonify({"status": "added"})
+        
+    @app.route("/product/<int:id>")
+    def product_detail(id):
+    
+        product = Product.query.get_or_404(id)
+    
+        return render_template("product_detail.html", product=product)
 
-    # ================= UPDATE CART =================
+    
+        # ================= UPDATE CART =================
 
     @app.route("/update_cart", methods=["POST"])
     @login_required
