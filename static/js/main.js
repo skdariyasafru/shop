@@ -1,19 +1,23 @@
 // ================= LOGIN MODAL =================
 
 function openLogin() {
-    document.getElementById("loginModal").style.display = "block";
+    const modal = document.getElementById("loginModal");
+    if (modal) modal.style.display = "block";
 }
 
 function closeLogin() {
-    document.getElementById("loginModal").style.display = "none";
+    const modal = document.getElementById("loginModal");
+    if (modal) modal.style.display = "none";
 }
 
 function openRegister() {
-    document.getElementById("registerModal").style.display = "block";
+    const modal = document.getElementById("registerModal");
+    if (modal) modal.style.display = "block";
 }
 
 function closeRegister() {
-    document.getElementById("registerModal").style.display = "none";
+    const modal = document.getElementById("registerModal");
+    if (modal) modal.style.display = "none";
 }
 
 function switchToRegister() {
@@ -33,31 +37,24 @@ function addToCart(productId, button) {
 
     fetch("/add_to_cart", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: productId })
     })
     .then(response => {
         if (response.status === 401) {
             openLogin();
-            return;
+            return null;
         }
         return response.json();
     })
     .then(data => {
-
         if (data && data.status === "added" && button) {
-
             button.innerText = "Added ✓";
             button.disabled = true;
             button.style.background = "#28a745";
-            button.style.cursor = "not-allowed";
         }
     })
-    .catch(error => {
-        console.error("Cart Error:", error);
-    });
+    .catch(error => console.error("Cart Error:", error));
 }
 
 
@@ -68,76 +65,84 @@ document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
 
-    if (!searchInput) return;
+    if (!searchInput || !searchResults) return;
+
+    let timeout = null;
 
     searchInput.addEventListener("keyup", function () {
 
-        let query = this.value.trim();
+        clearTimeout(timeout);
 
-        if (query.length < 1) {
+        const query = this.value.trim();
+
+        if (query.length === 0) {
             searchResults.innerHTML = "";
             searchResults.style.display = "none";
             return;
         }
 
-        fetch(`/search?q=${query}`)
-            .then(res => res.json())
-            .then(data => {
+        // small delay to prevent too many requests
+        timeout = setTimeout(() => {
 
-                searchResults.innerHTML = "";
+            fetch(`/search?q=${query}`)
+                .then(res => res.json())
+                .then(data => {
 
-                if (data.length === 0) {
-                    searchResults.style.display = "none";
-                    return;
-                }
+                    searchResults.innerHTML = "";
 
-                data.forEach(product => {
+                    if (!data || data.length === 0) {
+                        searchResults.style.display = "none";
+                        return;
+                    }
 
-                    const item = document.createElement("a");
+                    data.forEach(product => {
 
-                    item.href = `/product/${product.id}`;
-                    item.classList.add("search-item");
+                        const item = document.createElement("a");
+                        item.href = `/product/${product.id}`;
+                        item.className = "search-item";
 
-                    item.innerHTML = `
-                        <img src="${product.image}" alt="${product.name}" width="40">
-                        <div>
-                            <h4>${product.name}</h4>
-                            <p>₹${product.price}</p>
-                        </div>
-                    `;
+                        item.innerHTML = `
+                            <div>
+                                <strong>${product.name}</strong><br>
+                                ₹${product.price}
+                            </div>
+                        `;
 
-                    searchResults.appendChild(item);
+                        searchResults.appendChild(item);
+                    });
+
+                    searchResults.style.display = "block";
+                })
+                .catch(error => {
+                    console.error("Search Error:", error);
                 });
 
-                searchResults.style.display = "block";
-            })
-            .catch(error => {
-                console.error("Search Error:", error);
-            });
+        }, 300); // debounce delay
+
     });
 
-    // Hide dropdown when clicking outside
     document.addEventListener("click", function(e) {
         if (!searchInput.contains(e.target) &&
             !searchResults.contains(e.target)) {
             searchResults.style.display = "none";
         }
     });
+
 });
 
 
-// ================= CLOSE MODALS OUTSIDE CLICK =================
+// ================= CLOSE MODAL OUTSIDE =================
 
 window.onclick = function(event) {
 
     const loginModal = document.getElementById("loginModal");
     const registerModal = document.getElementById("registerModal");
 
-    if (event.target === loginModal) {
+    if (loginModal && event.target === loginModal) {
         closeLogin();
     }
 
-    if (event.target === registerModal) {
+    if (registerModal && event.target === registerModal) {
         closeRegister();
     }
 };
