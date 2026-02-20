@@ -1,3 +1,5 @@
+// ================= LOGIN MODAL =================
+
 function openLogin() {
     document.getElementById("loginModal").style.display = "block";
 }
@@ -23,7 +25,10 @@ function switchToLogin() {
     closeRegister();
     openLogin();
 }
-// add item
+
+
+// ================= ADD TO CART =================
+
 function addToCart(productId, button) {
 
     fetch("/add_to_cart", {
@@ -41,33 +46,36 @@ function addToCart(productId, button) {
         return response.json();
     })
     .then(data => {
-        if (data && data.status === "added") {
 
-            // 🔥 Change button text
+        if (data && data.status === "added" && button) {
+
             button.innerText = "Added ✓";
-
-            // 🔥 Disable button
             button.disabled = true;
-
-            // 🔥 Change button color
             button.style.background = "#28a745";
             button.style.cursor = "not-allowed";
         }
     })
     .catch(error => {
-        console.error("Error:", error);
+        console.error("Cart Error:", error);
     });
 }
-const searchInput = document.getElementById("searchInput");
-const searchResults = document.getElementById("searchResults");
 
-if (searchInput) {
+
+// ================= LIVE SEARCH =================
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("searchInput");
+    const searchResults = document.getElementById("searchResults");
+
+    if (!searchInput) return;
 
     searchInput.addEventListener("keyup", function () {
 
         let query = this.value.trim();
 
         if (query.length < 1) {
+            searchResults.innerHTML = "";
             searchResults.style.display = "none";
             return;
         }
@@ -85,20 +93,26 @@ if (searchInput) {
 
                 data.forEach(product => {
 
-                    searchResults.innerHTML += `
-                        <div class="search-item"
-                             onclick="window.location='/product/${product.id}'">
+                    const item = document.createElement("a");
 
-                            <img src="${product.image}" alt="${product.name}">
-                            <div>
-                                <h4>${product.name}</h4>
-                                <p>₹${product.price}</p>
-                            </div>
+                    item.href = `/product/${product.id}`;
+                    item.classList.add("search-item");
+
+                    item.innerHTML = `
+                        <img src="${product.image}" alt="${product.name}" width="40">
+                        <div>
+                            <h4>${product.name}</h4>
+                            <p>₹${product.price}</p>
                         </div>
                     `;
+
+                    searchResults.appendChild(item);
                 });
 
                 searchResults.style.display = "block";
+            })
+            .catch(error => {
+                console.error("Search Error:", error);
             });
     });
 
@@ -109,17 +123,21 @@ if (searchInput) {
             searchResults.style.display = "none";
         }
     });
-}
+});
 
 
-//end item
-
+// ================= CLOSE MODALS OUTSIDE CLICK =================
 
 window.onclick = function(event) {
-    if (event.target == document.getElementById("loginModal")) {
+
+    const loginModal = document.getElementById("loginModal");
+    const registerModal = document.getElementById("registerModal");
+
+    if (event.target === loginModal) {
         closeLogin();
     }
-    if (event.target == document.getElementById("registerModal")) {
+
+    if (event.target === registerModal) {
         closeRegister();
     }
 };
