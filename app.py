@@ -110,7 +110,9 @@ def create_app():
         flash("Registration successful")
 
         return redirect("/?login=1")
-
+    
+    
+    
     # ================= LOGOUT =================
 
     @app.route("/logout")
@@ -312,6 +314,30 @@ def create_app():
         )
 
     # ================= ADMIN LOGIN =================
+    # ================= SEARCH API =================
+@app.route("/search")
+def search():
+
+    query = request.args.get("q", "")
+
+    if not query:
+        return jsonify([])
+
+    products = Product.query.filter(
+        Product.name.ilike(f"%{query}%")
+    ).limit(10).all()
+
+    result = []
+
+    for p in products:
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "price": p.price,
+            "image": p.image
+        })
+
+    return jsonify(result)
     # ================= USER PROFILE =================
 
     @app.route("/profile")
