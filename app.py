@@ -17,8 +17,6 @@ def create_app():
     # ================= INIT DATABASE =================
     init_db(app)
 
-    with app.app_context():
-        create_tables(app)
 
     # ================= LOGIN MANAGER =================
     login_manager.init_app(app)
