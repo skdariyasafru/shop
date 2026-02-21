@@ -1,0 +1,21 @@
+
+
+{% extends "base.html" %}
+{% block content %}
+
+<div style="max-width:500px;margin:auto;text-align:center;">
+
+    <img src="{{ product.image or '' }}" 
+         style="width:100%;height:300px;object-fit:cover;">
+
+    <h2>{{ product.name }}</h2>
+
+    <h3>₹{{ product.price }}</h3>
+
+    <button onclick="addToCart({{ product.id }}, this)">
+        Add to Cart
+    </button>
+
+</div>
+
+{% endblock %}
