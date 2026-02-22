@@ -13,9 +13,10 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Init DB (NO create_all in production)
+    # ================= INIT DATABASE =================
     init_db(app)
 
+    # ================= LOGIN MANAGER =================
     login_manager.init_app(app)
     login_manager.login_view = "login"
     login_manager.login_message = None
@@ -28,7 +29,7 @@ def create_app():
     def unauthorized():
         return redirect("/?login=1")
 
-    # ================= HOME (PAGINATED) =================
+    # ================= HOME (PAGINATED + SEARCH) =================
     @app.route("/")
     def index():
         page = request.args.get("page", 1, type=int)
@@ -49,7 +50,7 @@ def create_app():
             pagination=products
         )
 
-    # ================= SEARCH (OPTIMIZED) =================
+    # ================= LIVE SEARCH =================
     @app.route("/search")
     def search():
         query = request.args.get("q", "")
@@ -98,6 +99,8 @@ def create_app():
     def register():
         username = request.form.get("username")
         password = request.form.get("password")
+        phone = request.form.get("phone")
+        address = request.form.get("address")
 
         if User.query.filter_by(username=username).first():
             flash("User already exists")
@@ -106,6 +109,8 @@ def create_app():
         user = User(
             username=username,
             password=password,
+            phone=phone,
+            address=address,
             referral_code=str(uuid.uuid4())[:8],
             points=0
         )
@@ -147,7 +152,7 @@ def create_app():
         db.session.commit()
         return jsonify({"status": "added"})
 
-    # ================= CART (JOIN OPTIMIZED) =================
+    # ================= CART (OPTIMIZED JOIN) =================
     @app.route("/cart")
     @login_required
     def cart():
@@ -174,6 +179,90 @@ def create_app():
             })
 
         return render_template("cart.html", items=cart_items, total=total)
+
+    # ================= CHECKOUT =================
+    @app.route("/checkout")
+    @login_required
+    def checkout():
+        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+
+        if not cart_items:
+            flash("Cart empty")
+            return redirect("/")
+
+        order_number = "ORD-" + datetime.now().strftime("%Y%m%d%H%M%S")
+
+        for item in cart_items:
+            product = Product.query.get(item.product_id)
+            if not product:
+                continue
+
+            db.session.add(Order(
+                order_number=order_number,
+                username=current_user.username,
+                phone=current_user.phone,
+                address=current_user.address,
+                product_name=product.name,
+                price=product.price,
+                quantity=item.quantity,
+                total=product.price * item.quantity,
+                status="Pending"
+            ))
+
+        Cart.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+
+        flash("Order placed successfully!")
+        return redirect("/my_orders")
+
+    # ================= MY ORDERS =================
+    @app.route("/my_orders")
+    @login_required
+    def my_orders():
+        orders = Order.query.filter_by(
+            username=current_user.username
+        ).order_by(Order.created_at.desc()).all()
+
+        return render_template("orders.html", orders=orders)
+
+    # ================= ORDER DETAILS =================
+    @app.route("/order/<order_number>")
+    @login_required
+    def order_details(order_number):
+        orders = Order.query.filter_by(
+            order_number=order_number,
+            username=current_user.username
+        ).all()
+
+        if not orders:
+            flash("Order not found")
+            return redirect("/my_orders")
+
+        return render_template(
+            "order_details.html",
+            orders=orders,
+            order_number=order_number
+        )
+
+    # ================= PROFILE =================
+    @app.route("/profile")
+    @login_required
+    def profile():
+
+        network_count = User.query.filter_by(
+            referred_by=current_user.referral_code
+        ).count()
+
+        total_pv = current_user.points or 0
+        wallet_balance = total_pv * 2
+
+        return render_template(
+            "profile.html",
+            user=current_user,
+            network_count=network_count,
+            total_pv=total_pv,
+            wallet_balance=wallet_balance
+        )
 
     return app
 
