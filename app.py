@@ -3,8 +3,8 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from db import init_db, db
 from models.models import User, Product, Cart, Order
 from config import Config
-import uuid
 from datetime import datetime
+import uuid
 
 login_manager = LoginManager()
 
@@ -32,14 +32,14 @@ def create_app():
     # ================= HOME =================
     @app.route("/")
     def index():
-        search = request.args.get("q")
+        search = request.args.get("q", "")
 
         if search:
             products = Product.query.filter(
                 Product.name.ilike(f"%{search}%")
-            ).all()
+            ).limit(50).all()
         else:
-            products = Product.query.all()
+            products = Product.query.limit(50).all()
 
         return render_template("index.html", products=products)
 
@@ -55,7 +55,7 @@ def create_app():
             Product.name.ilike(f"%{query}%")
         ).limit(10).all()
 
-        return jsonify([
+        result = [
             {
                 "id": p.id,
                 "name": p.name,
@@ -63,7 +63,15 @@ def create_app():
                 "image": p.image
             }
             for p in products
-        ])
+        ]
+
+        return jsonify(result)
+
+    # ================= PRODUCT DETAIL =================
+    @app.route("/product/<int:id>")
+    def product_detail(id):
+        product = Product.query.get_or_404(id)
+        return render_template("product_detail.html", product=product)
 
     # ================= LOGIN =================
     @app.route("/login", methods=["POST"])
@@ -73,12 +81,8 @@ def create_app():
 
         user = User.query.filter_by(username=username).first()
 
-        if not user:
-            flash("User not found")
-            return redirect("/?login=1")
-
-        if user.password != password:
-            flash("Incorrect password")
+        if not user or user.password != password:
+            flash("Invalid credentials")
             return redirect("/?login=1")
 
         login_user(user)
@@ -92,21 +96,17 @@ def create_app():
         password = request.form.get("password")
         phone = request.form.get("phone")
         address = request.form.get("address")
-        referral = request.form.get("referral")
 
         if User.query.filter_by(username=username).first():
             flash("User already exists")
             return redirect("/?login=1")
-
-        referral_code = str(uuid.uuid4())[:8]
 
         user = User(
             username=username,
             password=password,
             phone=phone,
             address=address,
-            referral_code=referral_code,
-            referred_by=referral,
+            referral_code=str(uuid.uuid4())[:8],
             points=0
         )
 
@@ -123,12 +123,6 @@ def create_app():
         logout_user()
         flash("Logged out")
         return redirect("/")
-
-    # ================= PRODUCT DETAIL =================
-    @app.route("/product/<int:id>")
-    def product_detail(id):
-        product = Product.query.get_or_404(id)
-        return render_template("product_detail.html", product=product)
 
     # ================= ADD TO CART =================
     @app.route("/add_to_cart", methods=["POST"])
@@ -153,49 +147,7 @@ def create_app():
         db.session.commit()
         return jsonify({"status": "added"})
 
-    # ================= UPDATE CART =================
-    @app.route("/update_cart", methods=["POST"])
-    @login_required
-    def update_cart():
-        data = request.json
-        product_id = data.get("id")
-        action = data.get("action")
-
-        item = Cart.query.filter_by(
-            user_id=current_user.id,
-            product_id=product_id
-        ).first()
-
-        if not item:
-            return jsonify({"status": "error"})
-
-        if action == "increase":
-            item.quantity += 1
-        elif action == "decrease":
-            if item.quantity > 1:
-                item.quantity -= 1
-            else:
-                db.session.delete(item)
-                db.session.commit()
-                return jsonify({"removed": True})
-
-        db.session.commit()
-
-        product = Product.query.get(product_id)
-        subtotal = product.price * item.quantity
-
-        total = sum(
-            Product.query.get(i.product_id).price * i.quantity
-            for i in Cart.query.filter_by(user_id=current_user.id).all()
-        )
-
-        return jsonify({
-            "quantity": item.quantity,
-            "subtotal": subtotal,
-            "total": total
-        })
-
-    # ================= CART PAGE =================
+    # ================= CART =================
     @app.route("/cart")
     @login_required
     def cart():
@@ -206,6 +158,9 @@ def create_app():
 
         for item in items:
             product = Product.query.get(item.product_id)
+            if not product:
+                continue
+
             subtotal = product.price * item.quantity
             total += subtotal
 
@@ -233,8 +188,10 @@ def create_app():
 
         for item in cart_items:
             product = Product.query.get(item.product_id)
+            if not product:
+                continue
 
-            order = Order(
+            db.session.add(Order(
                 order_number=order_number,
                 username=current_user.username,
                 phone=current_user.phone,
@@ -243,12 +200,8 @@ def create_app():
                 price=product.price,
                 quantity=item.quantity,
                 total=product.price * item.quantity,
-                payment_method="COD",
-                payment_status="Pending",
                 status="Pending"
-            )
-
-            db.session.add(order)
+            ))
 
         Cart.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
@@ -285,35 +238,10 @@ def create_app():
             order_number=order_number
         )
 
-    # ================= PROFILE =================
-    @app.route("/profile")
-    @login_required
-    def profile():
-        network_count = User.query.filter_by(
-            referred_by=current_user.referral_code
-        ).count()
-
-        total_pv = current_user.points or 0
-        wallet_balance = total_pv * 2
-
-        return render_template(
-            "profile.html",
-            user=current_user,
-            network_count=network_count,
-            total_pv=total_pv,
-            wallet_balance=wallet_balance
-        )
-
-    # ================= ADMIN LOGOUT =================
-    @app.route("/admin/logout")
-    def admin_logout():
-        session.pop("admin", None)
-        return redirect("/admin")
-
     return app
 
 
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
