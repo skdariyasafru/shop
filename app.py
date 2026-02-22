@@ -13,10 +13,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ================= INIT DATABASE =================
+    # Init DB (NO create_all in production)
     init_db(app)
 
-    # ================= LOGIN MANAGER =================
     login_manager.init_app(app)
     login_manager.login_view = "login"
     login_manager.login_message = None
@@ -29,33 +28,40 @@ def create_app():
     def unauthorized():
         return redirect("/?login=1")
 
-    # ================= HOME =================
+    # ================= HOME (PAGINATED) =================
     @app.route("/")
     def index():
+        page = request.args.get("page", 1, type=int)
+        per_page = 20
+
         search = request.args.get("q", "")
 
+        query = Product.query
+
         if search:
-            products = Product.query.filter(
-                Product.name.ilike(f"%{search}%")
-            ).limit(50).all()
-        else:
-            products = Product.query.limit(50).all()
+            query = query.filter(Product.name.ilike(f"{search}%"))
 
-        return render_template("index.html", products=products)
+        products = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # ================= SEARCH =================
+        return render_template(
+            "index.html",
+            products=products.items,
+            pagination=products
+        )
+
+    # ================= SEARCH (OPTIMIZED) =================
     @app.route("/search")
     def search():
         query = request.args.get("q", "")
 
-        if not query:
+        if not query or len(query) < 2:
             return jsonify([])
 
         products = Product.query.filter(
-            Product.name.ilike(f"%{query}%")
+            Product.name.ilike(f"{query}%")
         ).limit(10).all()
 
-        result = [
+        return jsonify([
             {
                 "id": p.id,
                 "name": p.name,
@@ -63,9 +69,7 @@ def create_app():
                 "image": p.image
             }
             for p in products
-        ]
-
-        return jsonify(result)
+        ])
 
     # ================= PRODUCT DETAIL =================
     @app.route("/product/<int:id>")
@@ -94,8 +98,6 @@ def create_app():
     def register():
         username = request.form.get("username")
         password = request.form.get("password")
-        phone = request.form.get("phone")
-        address = request.form.get("address")
 
         if User.query.filter_by(username=username).first():
             flash("User already exists")
@@ -104,8 +106,6 @@ def create_app():
         user = User(
             username=username,
             password=password,
-            phone=phone,
-            address=address,
             referral_code=str(uuid.uuid4())[:8],
             points=0
         )
@@ -147,96 +147,33 @@ def create_app():
         db.session.commit()
         return jsonify({"status": "added"})
 
-    # ================= CART =================
+    # ================= CART (JOIN OPTIMIZED) =================
     @app.route("/cart")
     @login_required
     def cart():
-        items = Cart.query.filter_by(user_id=current_user.id).all()
+
+        items = db.session.query(Cart, Product).join(
+            Product, Cart.product_id == Product.id
+        ).filter(
+            Cart.user_id == current_user.id
+        ).all()
 
         cart_items = []
         total = 0
 
-        for item in items:
-            product = Product.query.get(item.product_id)
-            if not product:
-                continue
-
-            subtotal = product.price * item.quantity
+        for cart_item, product in items:
+            subtotal = product.price * cart_item.quantity
             total += subtotal
 
             cart_items.append({
                 "product_id": product.id,
                 "name": product.name,
                 "price": product.price,
-                "quantity": item.quantity,
+                "quantity": cart_item.quantity,
                 "subtotal": subtotal
             })
 
         return render_template("cart.html", items=cart_items, total=total)
-
-    # ================= CHECKOUT =================
-    @app.route("/checkout")
-    @login_required
-    def checkout():
-        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
-
-        if not cart_items:
-            flash("Cart empty")
-            return redirect("/")
-
-        order_number = "ORD-" + datetime.now().strftime("%Y%m%d%H%M%S")
-
-        for item in cart_items:
-            product = Product.query.get(item.product_id)
-            if not product:
-                continue
-
-            db.session.add(Order(
-                order_number=order_number,
-                username=current_user.username,
-                phone=current_user.phone,
-                address=current_user.address,
-                product_name=product.name,
-                price=product.price,
-                quantity=item.quantity,
-                total=product.price * item.quantity,
-                status="Pending"
-            ))
-
-        Cart.query.filter_by(user_id=current_user.id).delete()
-        db.session.commit()
-
-        flash("Order placed successfully!")
-        return redirect("/my_orders")
-
-    # ================= MY ORDERS =================
-    @app.route("/my_orders")
-    @login_required
-    def my_orders():
-        orders = Order.query.filter_by(
-            username=current_user.username
-        ).order_by(Order.created_at.desc()).all()
-
-        return render_template("orders.html", orders=orders)
-
-    # ================= ORDER DETAILS =================
-    @app.route("/order/<order_number>")
-    @login_required
-    def order_details(order_number):
-        orders = Order.query.filter_by(
-            order_number=order_number,
-            username=current_user.username
-        ).all()
-
-        if not orders:
-            flash("Order not found")
-            return redirect("/my_orders")
-
-        return render_template(
-            "order_details.html",
-            orders=orders,
-            order_number=order_number
-        )
 
     return app
 
