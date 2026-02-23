@@ -50,6 +50,7 @@ def create_app():
             pagination=products
         )
     # ================= UPDATE CART =================
+    # ================= UPDATE CART =================
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
@@ -75,15 +76,26 @@ def create_app():
             else:
                 db.session.delete(item)
                 db.session.commit()
-                return jsonify({"removed": True})
+    
+                # recalc total after delete
+                items = db.session.query(Cart, Product).join(
+                    Product, Cart.product_id == Product.id
+                ).filter(
+                    Cart.user_id == current_user.id
+                ).all()
+    
+                total = sum(p.price * c.quantity for c, p in items)
+    
+                return jsonify({
+                    "removed": True,
+                    "total": total
+                })
     
         db.session.commit()
     
         product = Product.query.get(product_id)
-    
         subtotal = product.price * item.quantity
     
-        # Optimized total
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
