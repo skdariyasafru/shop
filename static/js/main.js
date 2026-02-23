@@ -1,7 +1,42 @@
 /* =====================================================
    INDEX MART - MAIN JS (Clean + Stable Version)
 ===================================================== */
+/* ================= UPDATE CART ================= */
 
+function updateCart(productId, action) {
+
+    fetch("/update_cart", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            id: productId,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if (data.removed) {
+            location.reload();
+            return;
+        }
+
+        if (data.quantity !== undefined) {
+
+            document.getElementById("qty-" + productId).innerText = data.quantity;
+
+            document.getElementById("subtotal-" + productId).innerText = data.subtotal;
+
+            document.getElementById("cart-total").innerText = data.total;
+        }
+
+    })
+    .catch(error => {
+        console.error("Update Cart Error:", error);
+    });
+}
 
 /* ================= LOGIN / REGISTER MODALS ================= */
 
