@@ -21,9 +21,9 @@
             <h3>{{ product.name }}</h3>
             <p class="price">₹{{ product.price }}</p>
 
-            <button onclick="addToCart({{ product.id }})">
-                Add to Cart
-            </button>
+           <button onclick="addToCart({{ product.id }}, this)">
+    Add to Cart
+</button>
         </div>
         {% endfor %}
     {% else %}
