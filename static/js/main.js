@@ -1,4 +1,9 @@
-// ================= LOGIN MODAL =================
+/* =====================================================
+   INDEX MART - MAIN JS (Clean + Stable Version)
+===================================================== */
+
+
+/* ================= LOGIN / REGISTER MODALS ================= */
 
 function openLogin() {
     const modal = document.getElementById("loginModal");
@@ -31,34 +36,50 @@ function switchToLogin() {
 }
 
 
-// ================= ADD TO CART =================
+/* ================= ADD TO CART ================= */
 
 function addToCart(productId, button) {
 
+    if (!productId) return;
+
     fetch("/add_to_cart", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify({ id: productId })
     })
     .then(response => {
+
         if (response.status === 401) {
             openLogin();
             return null;
         }
+
         return response.json();
     })
     .then(data => {
+
         if (data && data.status === "added" && button) {
-            button.innerText = "Added ✓";
+
+            // Visual feedback
+            button.innerHTML = "Added ✓";
             button.disabled = true;
-            button.style.background = "#28a745";
+
+            button.style.backgroundColor = "#28a745";
+            button.style.color = "#fff";
+            button.style.cursor = "not-allowed";
+            button.style.opacity = "0.9";
         }
+
     })
-    .catch(error => console.error("Cart Error:", error));
+    .catch(error => {
+        console.error("Add to Cart Error:", error);
+    });
 }
 
 
-// ================= LIVE SEARCH =================
+/* ================= LIVE SEARCH ================= */
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -67,25 +88,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!searchInput || !searchResults) return;
 
-    let timeout = null;
+    let debounceTimer;
 
-    searchInput.addEventListener("keyup", function () {
+    searchInput.addEventListener("input", function () {
 
-        clearTimeout(timeout);
+        clearTimeout(debounceTimer);
 
         const query = this.value.trim();
 
-        if (query.length === 0) {
+        if (query.length < 2) {
             searchResults.innerHTML = "";
             searchResults.style.display = "none";
             return;
         }
 
-        // small delay to prevent too many requests
-        timeout = setTimeout(() => {
+        debounceTimer = setTimeout(() => {
 
-            fetch(`/search?q=${query}`)
-                .then(res => res.json())
+            fetch(`/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
                 .then(data => {
 
                     searchResults.innerHTML = "";
@@ -118,10 +138,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
 
         }, 300); // debounce delay
-
     });
 
-    document.addEventListener("click", function(e) {
+    // Hide search dropdown when clicking outside
+    document.addEventListener("click", function (e) {
         if (!searchInput.contains(e.target) &&
             !searchResults.contains(e.target)) {
             searchResults.style.display = "none";
@@ -131,9 +151,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-// ================= CLOSE MODAL OUTSIDE =================
+/* ================= CLOSE MODAL ON OUTSIDE CLICK ================= */
 
-window.onclick = function(event) {
+window.addEventListener("click", function (event) {
 
     const loginModal = document.getElementById("loginModal");
     const registerModal = document.getElementById("registerModal");
@@ -145,4 +165,4 @@ window.onclick = function(event) {
     if (registerModal && event.target === registerModal) {
         closeRegister();
     }
-};
+});
