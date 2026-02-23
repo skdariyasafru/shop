@@ -49,7 +49,54 @@ def create_app():
             products=products.items,
             pagination=products
         )
-
+    # ================= UPDATE CART =================
+    @app.route("/update_cart", methods=["POST"])
+    @login_required
+    def update_cart():
+    
+        data = request.json
+        product_id = data.get("id")
+        action = data.get("action")
+    
+        item = Cart.query.filter_by(
+            user_id=current_user.id,
+            product_id=product_id
+        ).first()
+    
+        if not item:
+            return jsonify({"status": "error"})
+    
+        if action == "increase":
+            item.quantity += 1
+    
+        elif action == "decrease":
+            if item.quantity > 1:
+                item.quantity -= 1
+            else:
+                db.session.delete(item)
+                db.session.commit()
+                return jsonify({"removed": True})
+    
+        db.session.commit()
+    
+        product = Product.query.get(product_id)
+    
+        subtotal = product.price * item.quantity
+    
+        # Optimized total
+        items = db.session.query(Cart, Product).join(
+            Product, Cart.product_id == Product.id
+        ).filter(
+            Cart.user_id == current_user.id
+        ).all()
+    
+        total = sum(p.price * c.quantity for c, p in items)
+    
+        return jsonify({
+            "quantity": item.quantity,
+            "subtotal": subtotal,
+            "total": total
+        })
     # ================= LIVE SEARCH =================
     @app.route("/search")
     def search():
