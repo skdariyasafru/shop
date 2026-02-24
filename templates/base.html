@@ -25,12 +25,14 @@
     <div class="logo">🛒 Index Mart</div>
 
     <!-- SEARCH BAR -->
-    <form action="/" method="GET" class="search-form">
-        <input type="text"
-               name="q"
-               placeholder="Search products..."
-               value="{{ request.args.get('q','') }}">
-    </form>
+  <div class="search-container">
+    <input type="text"
+           id="searchInput"
+           placeholder="Search products..."
+           autocomplete="off">
+
+    <div id="searchResults" class="search-results"></div>
+</div>
 
     <div class="nav-links">
         {% if current_user.is_authenticated %}

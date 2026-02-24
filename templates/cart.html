@@ -7,27 +7,30 @@
 
 {% if items %}
 
-<div class="cart-container">
+<div class="cart-container" id="cart-container">
 
     {% for item in items %}
-    <div class="cart-item">
+    <div class="cart-item" id="row-{{ item.product_id }}">
 
-        <div>
+        <!-- Product Info -->
+        <div class="cart-info">
             <h3>{{ item.name }}</h3>
             <p>₹{{ item.price }}</p>
         </div>
 
+        <!-- Quantity Controls -->
         <div class="quantity-box">
-            <button onclick="updateQty({{ item.product_id }}, 'decrease')">−</button>
+            <button onclick="updateCart({{ item.product_id }}, 'decrease')">−</button>
 
             <span id="qty-{{ item.product_id }}">
                 {{ item.quantity }}
             </span>
 
-            <button onclick="updateQty({{ item.product_id }}, 'increase')">+</button>
+            <button onclick="updateCart({{ item.product_id }}, 'increase')">+</button>
         </div>
 
-        <div>
+        <!-- Subtotal -->
+        <div class="cart-subtotal">
             ₹<span id="subtotal-{{ item.product_id }}">
                 {{ item.subtotal }}
             </span>
@@ -38,42 +41,18 @@
 
 </div>
 
-<h3>Total: ₹<span id="cart-total">{{ total }}</span></h3>
+<h3>
+Total: ₹<span id="cart-total">{{ total }}</span>
+</h3>
 
 <a href="/checkout" class="checkout-btn">
     Proceed to Checkout
 </a>
 
 {% else %}
-<p>Your cart is empty.</p>
+
+<p id="empty-message">Your cart is empty.</p>
+
 {% endif %}
-
-<script>
-function updateQty(productId, action) {
-
-    fetch("/update_cart", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            id: productId,
-            action: action
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        if(data.removed){
-            location.reload();
-            return;
-        }
-
-        if(data.status === "updated"){
-            document.getElementById("qty-" + productId).innerText = data.quantity;
-            document.getElementById("subtotal-" + productId).innerText = data.subtotal;
-            document.getElementById("cart-total").innerText = data.total;
-        }
-    });
-}
-</script>
 
 {% endblock %}

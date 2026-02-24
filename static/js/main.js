@@ -1,9 +1,9 @@
 /* =====================================================
-   INDEX MART - MAIN JS (FULL CLEAN VERSION)
+   INDEX MART - MAIN JS (FINAL MERGED VERSION)
 ===================================================== */
 
 
-/* ================= LOGIN MODAL ================= */
+/* ================= LOGIN / REGISTER MODALS ================= */
 
 function openLogin() {
     const modal = document.getElementById("loginModal");
@@ -40,11 +40,11 @@ function switchToLogin() {
 
 function addToCart(productId, button) {
 
+    if (!productId) return;
+
     fetch("/add_to_cart", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: productId })
     })
     .then(response => {
@@ -65,6 +65,7 @@ function addToCart(productId, button) {
             button.style.background = "#28a745";
             button.style.color = "#fff";
             button.style.cursor = "not-allowed";
+            button.style.opacity = "0.9";
         }
 
     })
@@ -80,9 +81,7 @@ function updateCart(productId, action) {
 
     fetch("/update_cart", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             id: productId,
             action: action
@@ -91,7 +90,7 @@ function updateCart(productId, action) {
     .then(response => response.json())
     .then(data => {
 
-        // 🔥 Item removed
+        // Item removed
         if (data.removed) {
 
             const row = document.getElementById("row-" + productId);
@@ -107,12 +106,13 @@ function updateCart(productId, action) {
             }
 
             const totalEl = document.getElementById("cart-total");
-            if (totalEl) totalEl.innerText = data.total;
+            if (totalEl && data.total !== undefined)
+                totalEl.innerText = data.total;
 
             return;
         }
 
-        // 🔥 Quantity updated
+        // Quantity updated
         if (data.quantity !== undefined) {
 
             const qtyEl = document.getElementById("qty-" + productId);
@@ -129,6 +129,77 @@ function updateCart(productId, action) {
         console.error("Cart Update Error:", error);
     });
 }
+
+
+/* ================= LIVE SEARCH ================= */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("searchInput");
+    const searchResults = document.getElementById("searchResults");
+
+    if (!searchInput || !searchResults) return;
+
+    let debounceTimer;
+
+    searchInput.addEventListener("input", function () {
+
+        clearTimeout(debounceTimer);
+
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+            searchResults.innerHTML = "";
+            searchResults.style.display = "none";
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+
+            fetch(`/search?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+
+                    searchResults.innerHTML = "";
+
+                    if (!data || data.length === 0) {
+                        searchResults.style.display = "none";
+                        return;
+                    }
+
+                    data.forEach(product => {
+
+                        const item = document.createElement("a");
+                        item.href = `/product/${product.id}`;
+                        item.className = "search-item";
+
+                        item.innerHTML = `
+                            <div>
+                                <strong>${product.name}</strong><br>
+                                ₹${product.price}
+                            </div>
+                        `;
+
+                        searchResults.appendChild(item);
+                    });
+
+                    searchResults.style.display = "block";
+                })
+                .catch(error => {
+                    console.error("Search Error:", error);
+                });
+
+        }, 300);
+    });
+
+    document.addEventListener("click", function (e) {
+        if (!searchInput.contains(e.target) &&
+            !searchResults.contains(e.target)) {
+            searchResults.style.display = "none";
+        }
+    });
+
+});
 
 
 /* ================= CLOSE MODAL OUTSIDE ================= */
