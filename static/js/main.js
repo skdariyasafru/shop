@@ -1,42 +1,7 @@
 /* =====================================================
-   INDEX MART - MAIN JS (Clean + Stable Version)
+   INDEX MART - MAIN JS (FINAL MERGED VERSION)
 ===================================================== */
-/* ================= UPDATE CART ================= */
 
-function updateCart(productId, action) {
-
-    fetch("/update_cart", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            id: productId,
-            action: action
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-
-        if (data.removed) {
-            location.reload();
-            return;
-        }
-
-        if (data.quantity !== undefined) {
-
-            document.getElementById("qty-" + productId).innerText = data.quantity;
-
-            document.getElementById("subtotal-" + productId).innerText = data.subtotal;
-
-            document.getElementById("cart-total").innerText = data.total;
-        }
-
-    })
-    .catch(error => {
-        console.error("Update Cart Error:", error);
-    });
-}
 
 /* ================= LOGIN / REGISTER MODALS ================= */
 
@@ -79,9 +44,7 @@ function addToCart(productId, button) {
 
     fetch("/add_to_cart", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: productId })
     })
     .then(response => {
@@ -97,11 +60,9 @@ function addToCart(productId, button) {
 
         if (data && data.status === "added" && button) {
 
-            // Visual feedback
-            button.innerHTML = "Added ✓";
+            button.innerText = "Added ✓";
             button.disabled = true;
-
-            button.style.backgroundColor = "#28a745";
+            button.style.background = "#28a745";
             button.style.color = "#fff";
             button.style.cursor = "not-allowed";
             button.style.opacity = "0.9";
@@ -109,7 +70,63 @@ function addToCart(productId, button) {
 
     })
     .catch(error => {
-        console.error("Add to Cart Error:", error);
+        console.error("Add To Cart Error:", error);
+    });
+}
+
+
+/* ================= FULLY DYNAMIC CART ================= */
+
+function updateCart(productId, action) {
+
+    fetch("/update_cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id: productId,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        // Item removed
+        if (data.removed) {
+
+            const row = document.getElementById("row-" + productId);
+
+            if (row) {
+                row.style.transition = "0.3s ease";
+                row.style.opacity = "0";
+                row.style.transform = "translateX(-20px)";
+
+                setTimeout(() => {
+                    row.remove();
+                }, 300);
+            }
+
+            const totalEl = document.getElementById("cart-total");
+            if (totalEl && data.total !== undefined)
+                totalEl.innerText = data.total;
+
+            return;
+        }
+
+        // Quantity updated
+        if (data.quantity !== undefined) {
+
+            const qtyEl = document.getElementById("qty-" + productId);
+            const subEl = document.getElementById("subtotal-" + productId);
+            const totalEl = document.getElementById("cart-total");
+
+            if (qtyEl) qtyEl.innerText = data.quantity;
+            if (subEl) subEl.innerText = data.subtotal;
+            if (totalEl) totalEl.innerText = data.total;
+        }
+
+    })
+    .catch(error => {
+        console.error("Cart Update Error:", error);
     });
 }
 
@@ -140,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
         debounceTimer = setTimeout(() => {
 
             fetch(`/search?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
 
                     searchResults.innerHTML = "";
@@ -172,10 +189,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.error("Search Error:", error);
                 });
 
-        }, 300); // debounce delay
+        }, 300);
     });
 
-    // Hide search dropdown when clicking outside
     document.addEventListener("click", function (e) {
         if (!searchInput.contains(e.target) &&
             !searchResults.contains(e.target)) {
@@ -186,9 +202,9 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/* ================= CLOSE MODAL ON OUTSIDE CLICK ================= */
+/* ================= CLOSE MODAL OUTSIDE ================= */
 
-window.addEventListener("click", function (event) {
+window.addEventListener("click", function(event) {
 
     const loginModal = document.getElementById("loginModal");
     const registerModal = document.getElementById("registerModal");
