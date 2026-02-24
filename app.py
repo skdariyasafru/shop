@@ -5,6 +5,7 @@ from models.models import User, Product, Cart, Order
 from config import Config
 from datetime import datetime
 import uuid
+import os
 
 login_manager = LoginManager()
 
@@ -329,4 +330,5 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
