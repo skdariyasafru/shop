@@ -19,3 +19,6 @@ class Config:
         "pool_timeout": 30,
         "pool_recycle": 1800,
     }
+    SQLALCHEMY_ENGINE_OPTIONS = {
+    "pool_pre_ping": True
+}
