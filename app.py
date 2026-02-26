@@ -131,6 +131,7 @@ def create_app():
             }
             for p in products
         ])
+ 
 
     # ================= PRODUCT DETAIL =================
     @app.route("/product/<int:id>")
