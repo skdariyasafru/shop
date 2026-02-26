@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, render_template, flash, session
+from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
 from models.models import User, Product, Cart, Order
@@ -13,7 +13,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ================= INIT DATABASE =================
+    # ================= DATABASE =================
     init_db(app)
 
     # ================= LOGIN MANAGER =================
@@ -29,12 +29,11 @@ def create_app():
     def unauthorized():
         return redirect("/?login=1")
 
-    # ================= HOME (PAGINATED + SEARCH) =================
+    # ================= HOME =================
     @app.route("/")
     def index():
         page = request.args.get("page", 1, type=int)
         per_page = 20
-
         search = request.args.get("q", "")
 
         query = Product.query
@@ -49,89 +48,23 @@ def create_app():
             products=products.items,
             pagination=products
         )
-    # ================= UPDATE CART =================
-    # ================= UPDATE CART =================
-    @app.route("/update_cart", methods=["POST"])
-    @login_required
-    def update_cart():
-    
-        data = request.json
-        product_id = data.get("id")
-        action = data.get("action")
-    
-        item = Cart.query.filter_by(
-            user_id=current_user.id,
-            product_id=product_id
-        ).first()
-    
-        if not item:
-            return jsonify({"status": "error"})
-    
-        if action == "increase":
-            item.quantity += 1
-    
-        elif action == "decrease":
-            if item.quantity > 1:
-                item.quantity -= 1
-            else:
-                db.session.delete(item)
-                db.session.commit()
-    
-                # recalc total after delete
-                items = db.session.query(Cart, Product).join(
-                    Product, Cart.product_id == Product.id
-                ).filter(
-                    Cart.user_id == current_user.id
-                ).all()
-    
-                total = sum(p.price * c.quantity for c, p in items)
-    
-                return jsonify({
-                    "removed": True,
-                    "total": total
-                })
-    
-        db.session.commit()
-    
-        product = Product.query.get(product_id)
-        subtotal = product.price * item.quantity
-    
-        items = db.session.query(Cart, Product).join(
-            Product, Cart.product_id == Product.id
-        ).filter(
-            Cart.user_id == current_user.id
-        ).all()
-    
-        total = sum(p.price * c.quantity for c, p in items)
-    
-        return jsonify({
-            "quantity": item.quantity,
-            "subtotal": subtotal,
-            "total": total
-        })
-    # ================= LIVE SEARCH =================
+
     # ================= LIVE SEARCH =================
     @app.route("/search")
     def search():
         query = request.args.get("q", "").strip()
-    
+
         if not query:
             return jsonify([])
-    
+
         products = Product.query.filter(
-            Product.name.ilike(f"%{query}%")
+            Product.name.ilike(f"{query}%")
         ).limit(10).all()
-    
+
         return jsonify([
-            {
-                "id": p.id,
-                "name": p.name,
-                "price": p.price,
-                "image": p.image
-            }
+            {"id": p.id, "name": p.name, "price": p.price, "image": p.image}
             for p in products
         ])
- 
 
     # ================= PRODUCT DETAIL =================
     @app.route("/product/<int:id>")
@@ -152,7 +85,6 @@ def create_app():
             return redirect("/?login=1")
 
         login_user(user)
-        flash("Login successful")
         return redirect("/")
 
     # ================= REGISTER =================
@@ -187,7 +119,6 @@ def create_app():
     @login_required
     def logout():
         logout_user()
-        flash("Logged out")
         return redirect("/")
 
     # ================= ADD TO CART =================
@@ -213,7 +144,51 @@ def create_app():
         db.session.commit()
         return jsonify({"status": "added"})
 
-    # ================= CART (OPTIMIZED JOIN) =================
+    # ================= UPDATE CART =================
+    @app.route("/update_cart", methods=["POST"])
+    @login_required
+    def update_cart():
+        data = request.json
+        product_id = data.get("id")
+        action = data.get("action")
+
+        item = Cart.query.filter_by(
+            user_id=current_user.id,
+            product_id=product_id
+        ).first()
+
+        if not item:
+            return jsonify({"status": "error"})
+
+        if action == "increase":
+            item.quantity += 1
+
+        elif action == "decrease":
+            if item.quantity > 1:
+                item.quantity -= 1
+            else:
+                db.session.delete(item)
+                db.session.commit()
+                return jsonify({"removed": True})
+
+        db.session.commit()
+
+        # Efficient total calculation
+        items = db.session.query(Cart, Product).join(
+            Product, Cart.product_id == Product.id
+        ).filter(
+            Cart.user_id == current_user.id
+        ).all()
+
+        total = sum(p.price * c.quantity for c, p in items)
+
+        return jsonify({
+            "quantity": item.quantity,
+            "subtotal": item.quantity * Product.query.get(product_id).price,
+            "total": total
+        })
+
+    # ================= CART =================
     @app.route("/cart")
     @login_required
     def cart():
@@ -245,6 +220,7 @@ def create_app():
     @app.route("/checkout")
     @login_required
     def checkout():
+
         cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
         if not cart_items:
@@ -255,8 +231,6 @@ def create_app():
 
         for item in cart_items:
             product = Product.query.get(item.product_id)
-            if not product:
-                continue
 
             db.session.add(Order(
                 order_number=order_number,
@@ -285,25 +259,6 @@ def create_app():
         ).order_by(Order.created_at.desc()).all()
 
         return render_template("orders.html", orders=orders)
-
-    # ================= ORDER DETAILS =================
-    @app.route("/order/<order_number>")
-    @login_required
-    def order_details(order_number):
-        orders = Order.query.filter_by(
-            order_number=order_number,
-            username=current_user.username
-        ).all()
-
-        if not orders:
-            flash("Order not found")
-            return redirect("/my_orders")
-
-        return render_template(
-            "order_details.html",
-            orders=orders,
-            order_number=order_number
-        )
 
     # ================= PROFILE =================
     @app.route("/profile")
