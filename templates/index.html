@@ -8,7 +8,6 @@
     <input type="text"
            id="searchInput"
            placeholder="Search products..."
-           onkeyup="liveSearch()"
            autocomplete="off">
 </div>
 
@@ -20,10 +19,9 @@
             <img src="{{ product.image }}" alt="{{ product.name }}">
             <h3>{{ product.name }}</h3>
             <p class="price">₹{{ product.price }}</p>
-
-           <button onclick="addToCart({{ product.id }}, this)">
-    Add to Cart
-</button>
+            <button onclick="addToCart({{ product.id }})">
+                Add to Cart
+            </button>
         </div>
         {% endfor %}
     {% else %}
@@ -34,19 +32,38 @@
 <!-- ===== JAVASCRIPT ===== -->
 <script>
 
-// ---------- LIVE SEARCH ----------
-function liveSearch() {
-    const query = document.getElementById("searchInput").value;
+let debounceTimer;
 
-    if (query.length === 0) {
-        location.reload();
+// ---------- SMOOTH LIVE SEARCH ----------
+document.getElementById("searchInput").addEventListener("input", function () {
+    clearTimeout(debounceTimer);
+
+    const query = this.value.trim();
+
+    debounceTimer = setTimeout(() => {
+        liveSearch(query);
+    }, 300); // 300ms delay (faster & smooth)
+});
+
+function liveSearch(query) {
+    const container = document.getElementById("productContainer");
+
+    if (query === "") {
+        fetch(window.location.pathname)
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const newProducts = doc.getElementById("productContainer");
+            container.innerHTML = newProducts.innerHTML;
+        });
         return;
     }
 
     fetch(`/search?q=${query}`)
     .then(res => res.json())
     .then(data => {
-        const container = document.getElementById("productContainer");
+
         container.innerHTML = "";
 
         if (data.length === 0) {
@@ -54,18 +71,25 @@ function liveSearch() {
             return;
         }
 
+        const fragment = document.createDocumentFragment();
+
         data.forEach(p => {
-            container.innerHTML += `
-                <div class="card">
-                    <img src="${p.image}" alt="${p.name}">
-                    <h3>${p.name}</h3>
-                    <p class="price">₹${p.price}</p>
-                    <button onclick="addToCart(${p.id})">
-                        Add to Cart
-                    </button>
-                </div>
+            const div = document.createElement("div");
+            div.className = "card";
+
+            div.innerHTML = `
+                <img src="${p.image}" alt="${p.name}">
+                <h3>${p.name}</h3>
+                <p class="price">₹${p.price}</p>
+                <button onclick="addToCart(${p.id})">
+                    Add to Cart
+                </button>
             `;
+
+            fragment.appendChild(div);
         });
+
+        container.appendChild(fragment);
     });
 }
 
