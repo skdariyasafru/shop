@@ -110,17 +110,18 @@ def create_app():
             "total": total
         })
     # ================= LIVE SEARCH =================
+    # ================= LIVE SEARCH =================
     @app.route("/search")
     def search():
-        query = request.args.get("q", "")
-
-        if not query or len(query) < 2:
+        query = request.args.get("q", "").strip()
+    
+        if not query:
             return jsonify([])
-
+    
         products = Product.query.filter(
-            Product.name.ilike(f"{query}%")
+            Product.name.ilike(f"%{query}%")
         ).limit(10).all()
-
+    
         return jsonify([
             {
                 "id": p.id,
