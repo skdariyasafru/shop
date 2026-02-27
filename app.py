@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, redirect, render_template, flash
+77
+'o999999999999999erqa`2from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
 from models.models import User, Product, Cart, Order
@@ -304,5 +305,7 @@ def create_app():
 
 app = create_app()
 
+
 if __name__ == "__main__":
-    app.run(debug=False)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
