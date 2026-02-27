@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify, redirect, render_template, flash, session
+from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
 from models.models import User, Product, Cart, Order
 from config import Config
 from datetime import datetime
 import uuid
-import os
+
 
 login_manager = LoginManager()
 
@@ -14,7 +14,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ================= INIT DATABASE =================
+    # ================= DATABASE =================
     init_db(app)
 
     # ================= LOGIN MANAGER =================
@@ -30,12 +30,11 @@ def create_app():
     def unauthorized():
         return redirect("/?login=1")
 
-    # ================= HOME (PAGINATED + SEARCH) =================
+    # ================= HOME =================
     @app.route("/")
     def index():
         page = request.args.get("page", 1, type=int)
         per_page = 20
-
         search = request.args.get("q", "")
 
         query = Product.query
@@ -50,72 +49,13 @@ def create_app():
             products=products.items,
             pagination=products
         )
-    # ================= UPDATE CART =================
-    # ================= UPDATE CART =================
-    @app.route("/update_cart", methods=["POST"])
-    @login_required
-    def update_cart():
-    
-        data = request.json
-        product_id = data.get("id")
-        action = data.get("action")
-    
-        item = Cart.query.filter_by(
-            user_id=current_user.id,
-            product_id=product_id
-        ).first()
-    
-        if not item:
-            return jsonify({"status": "error"})
-    
-        if action == "increase":
-            item.quantity += 1
-    
-        elif action == "decrease":
-            if item.quantity > 1:
-                item.quantity -= 1
-            else:
-                db.session.delete(item)
-                db.session.commit()
-    
-                # recalc total after delete
-                items = db.session.query(Cart, Product).join(
-                    Product, Cart.product_id == Product.id
-                ).filter(
-                    Cart.user_id == current_user.id
-                ).all()
-    
-                total = sum(p.price * c.quantity for c, p in items)
-    
-                return jsonify({
-                    "removed": True,
-                    "total": total
-                })
-    
-        db.session.commit()
-    
-        product = Product.query.get(product_id)
-        subtotal = product.price * item.quantity
-    
-        items = db.session.query(Cart, Product).join(
-            Product, Cart.product_id == Product.id
-        ).filter(
-            Cart.user_id == current_user.id
-        ).all()
-    
-        total = sum(p.price * c.quantity for c, p in items)
-    
-        return jsonify({
-            "quantity": item.quantity,
-            "subtotal": subtotal,
-            "total": total
-        })
+
     # ================= LIVE SEARCH =================
     @app.route("/search")
     def search():
-        query = request.args.get("q", "")
+        query = request.args.get("q", "").strip()
 
-        if not query or len(query) < 2:
+        if not query:
             return jsonify([])
 
         products = Product.query.filter(
@@ -151,7 +91,6 @@ def create_app():
             return redirect("/?login=1")
 
         login_user(user)
-        flash("Login successful")
         return redirect("/")
 
     # ================= REGISTER =================
@@ -186,7 +125,6 @@ def create_app():
     @login_required
     def logout():
         logout_user()
-        flash("Logged out")
         return redirect("/")
 
     # ================= ADD TO CART =================
@@ -212,15 +150,59 @@ def create_app():
         db.session.commit()
         return jsonify({"status": "added"})
 
-    # ================= CART (OPTIMIZED JOIN) =================
-    @app.route("/cart")
+    # ================= UPDATE CART =================
+    @app.route("/update_cart", methods=["POST"])
     @login_required
-    def cart():
+    def update_cart():
+        data = request.json
+        product_id = data.get("id")
+        action = data.get("action")
+
+        item = Cart.query.filter_by(
+            user_id=current_user.id,
+            product_id=product_id
+        ).first()
+
+        if not item:
+            return jsonify({"status": "error"})
+
+        if action == "increase":
+            item.quantity += 1
+        elif action == "decrease":
+            if item.quantity > 1:
+                item.quantity -= 1
+            else:
+                db.session.delete(item)
+                db.session.commit()
+                return jsonify({"removed": True})
+
+        db.session.commit()
+
+        product = Product.query.get(product_id)
+        subtotal = product.price * item.quantity
 
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
             Cart.user_id == current_user.id
+        ).all()
+
+        total = sum(p.price * c.quantity for c, p in items)
+
+        return jsonify({
+            "quantity": item.quantity,
+            "subtotal": subtotal,
+            "total": total
+        })
+
+    # ================= CART =================
+    @app.route("/cart")
+    @login_required
+    def cart():
+        items = db.session.query(Cart, Product).join(
+            Product, Cart.product_id == Product.id
+        ).filter(
+            Cart.user_id=current_user.id
         ).all()
 
         cart_items = []
@@ -254,8 +236,6 @@ def create_app():
 
         for item in cart_items:
             product = Product.query.get(item.product_id)
-            if not product:
-                continue
 
             db.session.add(Order(
                 order_number=order_number,
@@ -304,31 +284,7 @@ def create_app():
             order_number=order_number
         )
 
-    # ================= PROFILE =================
-    @app.route("/profile")
-    @login_required
-    def profile():
-
-        network_count = User.query.filter_by(
-            referred_by=current_user.referral_code
-        ).count()
-
-        total_pv = current_user.points or 0
-        wallet_balance = total_pv * 2
-
-        return render_template(
-            "profile.html",
-            user=current_user,
-            network_count=network_count,
-            total_pv=total_pv,
-            wallet_balance=wallet_balance
-        )
-
     return app
 
 
 app = create_app()
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
