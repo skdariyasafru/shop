@@ -1,5 +1,4 @@
-77
-'o999999999999999erqa`2from flask import Flask, request, jsonify, redirect, render_template, flash
+from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from db import init_db, db
 from models.models import User, Product, Cart, Order
