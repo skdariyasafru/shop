@@ -213,3 +213,26 @@ function showToast(message) {
     font-size: 22px;
     cursor: pointer;
 }
+.qty-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.qty-box button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.qty-box span {
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}s
