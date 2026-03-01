@@ -1,5 +1,6 @@
+
 /* =====================================================
-   INDEX MART - CLEAN PROFESSIONAL VERSION (OPTIMIZED)
+   INDEX MART - CLEAN PROFESSIONAL VERSION
 ===================================================== */
 
 
@@ -48,13 +49,50 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/* =====================================================
-   CART SYSTEM (ADD / + / - WITHOUT RELOAD)
-===================================================== */
+/* ================= ADD TO CART ================= */
 
-function addToCart(productId) {
-    updateCart(productId, "increase");
+function addToCart(productId, button = null) {
+
+    if (!productId) return;
+
+    fetch("/add_to_cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: productId })
+    })
+    .then(response => {
+
+        // If not logged in (Flask redirect)
+        if (response.status === 302 || response.status === 401) {
+            window.location.href = "/?login=1";
+            return null;
+        }
+
+        return response.json();
+    })
+    .then(data => {
+
+        if (!data) return;
+
+        if (data.status === "added") {
+
+            if (button) {
+                button.innerText = "Added ✓";
+                button.disabled = true;
+                button.style.background = "#28a745";
+                button.style.color = "#fff";
+                button.style.cursor = "not-allowed";
+            }
+
+            console.log("Item added successfully");
+        }
+
+    })
+    .catch(error => console.error("Add To Cart Error:", error));
 }
+
+
+/* ================= UPDATE CART ================= */
 
 function updateCart(productId, action) {
 
@@ -66,70 +104,28 @@ function updateCart(productId, action) {
             action: action
         })
     })
-    .then(response => {
-
-        if (response.status === 401) {
-            window.location.href = "/?login=1";
-            return null;
-        }
-
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
 
-        if (!data) return;
-
-        /* ===== PRODUCT GRID UPDATE ===== */
-        const section = document.getElementById("cart-section-" + productId);
-
-        if (section) {
-
-            if (data.quantity > 0) {
-
-                section.innerHTML = `
-                    <div class="qty-box">
-                        <button onclick="updateCart(${productId}, 'decrease')">-</button>
-                        <span id="qty-${productId}">${data.quantity}</span>
-                        <button onclick="updateCart(${productId}, 'increase')">+</button>
-                    </div>
-                `;
-
-            } else {
-
-                section.innerHTML = `
-                    <button onclick="addToCart(${productId})">
-                        Add to Cart
-                    </button>
-                `;
-            }
+        if (data.removed) {
+            location.reload();
+            return;
         }
-
-        /* ===== CART PAGE UPDATE (if exists) ===== */
 
         const qtyEl = document.getElementById(`qty-${productId}`);
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
         const totalEl = document.getElementById("cart-total");
 
-        if (qtyEl && data.quantity !== undefined) {
-            qtyEl.innerText = data.quantity;
-        }
-
-        if (subtotalEl && data.subtotal !== undefined) {
-            subtotalEl.innerText = "₹" + data.subtotal;
-        }
-
-        if (totalEl && data.total !== undefined) {
-            totalEl.innerText = "₹" + data.total;
-        }
+        if (qtyEl) qtyEl.innerText = data.quantity;
+        if (subtotalEl) subtotalEl.innerText = "₹" + data.subtotal;
+        if (totalEl) totalEl.innerText = "₹" + data.total;
 
     })
     .catch(error => console.error("Cart Update Error:", error));
 }
 
 
-/* =====================================================
-   LIVE SEARCH (NAVBAR DROPDOWN)
-===================================================== */
+/* ================= LIVE SEARCH (NAVBAR DROPDOWN) ================= */
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -198,9 +194,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/* =====================================================
-   CLOSE MODAL ON OUTSIDE CLICK
-===================================================== */
+/* ================= CLOSE MODAL ON OUTSIDE CLICK ================= */
 
 window.addEventListener("click", function (event) {
 
@@ -214,5 +208,4 @@ window.addEventListener("click", function (event) {
     if (registerModal && event.target === registerModal) {
         closeRegister();
     }
-
-});
+}); 
