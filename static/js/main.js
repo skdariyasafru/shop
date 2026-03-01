@@ -123,7 +123,39 @@ function updateCart(productId, action) {
     })
     .catch(error => console.error("Cart Update Error:", error));
 }
+function changeQty(productId, action) {
 
+    fetch("/update_cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id: productId,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if (data.removed) {
+            const container = document.getElementById(`cart-control-${productId}`);
+            if (container) {
+                container.innerHTML = `
+                    <button onclick="addToCart(${productId}, this)">
+                        Add to Cart
+                    </button>
+                `;
+            }
+            return;
+        }
+
+        const qtyEl = document.getElementById(`qty-${productId}`);
+        if (qtyEl) qtyEl.innerText = data.quantity;
+
+    })
+    .catch(error => {
+        console.error("Quantity Error:", error);
+    });
+}
 
 /* ================= LIVE SEARCH (NAVBAR DROPDOWN) ================= */
 
