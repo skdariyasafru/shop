@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
 
@@ -16,31 +17,12 @@
     {% if products %}
         {% for product in products %}
         <div class="card">
-
             <img src="{{ product.image }}" alt="{{ product.name }}">
             <h3>{{ product.name }}</h3>
             <p class="price">₹{{ product.price }}</p>
-
-            {% if current_user.is_authenticated %}
-                <div id="cart-section-{{ product.id }}">
-                    {% if product.id in cart_dict %}
-                        <div class="qty-box">
-                            <button onclick="updateCart({{ product.id }}, 'decrease')">-</button>
-                            <span>{{ cart_dict[product.id] }}</span>
-                            <button onclick="updateCart({{ product.id }}, 'increase')">+</button>
-                        </div>
-                    {% else %}
-                        <button onclick="addToCart({{ product.id }})">
-                            Add to Cart
-                        </button>
-                    {% endif %}
-                </div>
-            {% else %}
-                <button onclick="window.location='/?login=1'">
-                    Add to Cart
-                </button>
-            {% endif %}
-
+            <button onclick="addToCart({{ product.id }})">
+                Add to Cart
+            </button>
         </div>
         {% endfor %}
     {% else %}
@@ -48,4 +30,147 @@
     {% endif %}
 </div>
 
-{% endblock %}
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+
+let debounceTimer;
+
+// ---------- SMOOTH LIVE SEARCH ----------
+document.getElementById("searchInput").addEventListener("input", function () {
+    clearTimeout(debounceTimer);
+
+    const query = this.value.trim();
+
+    debounceTimer = setTimeout(() => {
+        liveSearch(query);
+    }, 300); // 300ms delay (faster & smooth)
+});
+
+function liveSearch(query) {
+    const container = document.getElementById("productContainer");
+
+    if (query === "") {
+        fetch(window.location.pathname)
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const newProducts = doc.getElementById("productContainer");
+            container.innerHTML = newProducts.innerHTML;
+        });
+        return;
+    }
+
+    fetch(`/search?q=${query}`)
+    .then(res => res.json())
+    .then(data => {
+
+        container.innerHTML = "";
+
+        if (data.length === 0) {
+            container.innerHTML = "<p>No products found</p>";
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        data.forEach(p => {
+            const div = document.createElement("div");
+            div.className = "card";
+
+            div.innerHTML = `
+                <img src="${p.image}" alt="${p.name}">
+                <h3>${p.name}</h3>
+                <p class="price">₹${p.price}</p>
+                <button onclick="addToCart(${p.id})">
+                    Add to Cart
+                </button>
+            `;
+
+            fragment.appendChild(div);
+        });
+
+        container.appendChild(fragment);
+    });
+}
+
+// ---------- ADD TO CART ----------
+function addToCart(id) {
+    fetch("/add_to_cart", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id: id })
+    })
+    .then(res => {
+        if (res.status === 401) {
+            window.location.href = "/?login=1";
+        } else {
+            window.location.href = "/cart";
+        }
+    });
+}
+
+</script>
+
+<!-- ===== STYLES ===== -->
+<style>
+
+.search-wrapper {
+    margin-bottom: 20px;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.price {
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+button {
+    padding: 8px 15px;
+    border: none;
+    background: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+</style>
+
+{% endblock %}  
