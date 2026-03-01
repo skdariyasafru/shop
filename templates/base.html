@@ -118,6 +118,42 @@
 
 <!-- External JS -->
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+function openLogin() {
+    document.getElementById("loginModal").style.display = "block";
+}
 
+function closeLogin() {
+    document.getElementById("loginModal").style.display = "none";
+}
+
+function openRegister() {
+    document.getElementById("registerModal").style.display = "block";
+}
+
+function closeRegister() {
+    document.getElementById("registerModal").style.display = "none";
+}
+
+function switchToRegister() {
+    closeLogin();
+    openRegister();
+}
+
+function switchToLogin() {
+    closeRegister();
+    openLogin();
+}
+
+/* ✅ AUTO OPEN LOGIN IF ?login=1 */
+window.addEventListener("DOMContentLoaded", function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("login") === "1") {
+        openLogin();
+    }
+});
+</script>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
