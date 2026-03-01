@@ -171,10 +171,11 @@ def create_app():
             ))
 
         db.session.commit()
+
         return jsonify({"status": "added"})
 
     # =================================================
-    # UPDATE CART
+    # UPDATE CART (for + and - buttons)
     # =================================================
     @app.route("/update_cart", methods=["POST"])
     @login_required
@@ -193,6 +194,7 @@ def create_app():
 
         if action == "increase":
             item.quantity += 1
+
         elif action == "decrease":
             if item.quantity > 1:
                 item.quantity -= 1
@@ -248,6 +250,74 @@ def create_app():
             })
 
         return render_template("cart.html", items=cart_items, total=total)
+
+    # =================================================
+    # CHECKOUT
+    # =================================================
+    @app.route("/checkout")
+    @login_required
+    def checkout():
+        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+
+        if not cart_items:
+            flash("Cart empty")
+            return redirect("/")
+
+        order_number = "ORD-" + datetime.now().strftime("%Y%m%d%H%M%S")
+
+        for item in cart_items:
+            product = Product.query.get(item.product_id)
+
+            db.session.add(Order(
+                order_number=order_number,
+                username=current_user.username,
+                phone=current_user.phone,
+                address=current_user.address,
+                product_name=product.name,
+                price=product.price,
+                quantity=item.quantity,
+                total=product.price * item.quantity,
+                status="Pending"
+            ))
+
+        Cart.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+
+        flash("Order placed successfully!")
+        return redirect("/my_orders")
+
+    # =================================================
+    # MY ORDERS  (WORKING)
+    # =================================================
+    @app.route("/my_orders")
+    @login_required
+    def my_orders():
+        orders = Order.query.filter_by(
+            username=current_user.username
+        ).order_by(Order.created_at.desc()).all()
+
+        return render_template("orders.html", orders=orders)
+
+    # =================================================
+    # ORDER DETAILS
+    # =================================================
+    @app.route("/order/<order_number>")
+    @login_required
+    def order_details(order_number):
+        orders = Order.query.filter_by(
+            order_number=order_number,
+            username=current_user.username
+        ).all()
+
+        if not orders:
+            flash("Order not found")
+            return redirect("/my_orders")
+
+        return render_template(
+            "order_details.html",
+            orders=orders,
+            order_number=order_number
+        )
 
     # =================================================
     # PROFILE
