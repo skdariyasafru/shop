@@ -5,6 +5,7 @@ from models.models import User, Product, Cart, Order
 from config import Config
 from datetime import datetime
 import uuid
+import os
 
 
 login_manager = LoginManager()
@@ -44,10 +45,18 @@ def create_app():
 
         products = query.paginate(page=page, per_page=per_page, error_out=False)
 
+        # 🔥 OPTIMIZED CART FETCH (ONLY IF LOGGED IN)
+        cart_dict = {}
+
+        if current_user.is_authenticated:
+            cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+            cart_dict = {item.product_id: item.quantity for item in cart_items}
+
         return render_template(
             "index.html",
             products=products.items,
-            pagination=products
+            pagination=products,
+            cart_dict=cart_dict
         )
 
     # ================= LIVE SEARCH =================
@@ -129,30 +138,7 @@ def create_app():
         flash("Logged out")
         return redirect("/")
 
-    # ================= ADD TO CART =================
-    @app.route("/add_to_cart", methods=["POST"])
-    @login_required
-    def add_to_cart():
-        product_id = request.json.get("id")
-
-        item = Cart.query.filter_by(
-            user_id=current_user.id,
-            product_id=product_id
-        ).first()
-
-        if item:
-            item.quantity += 1
-        else:
-            db.session.add(Cart(
-                user_id=current_user.id,
-                product_id=product_id,
-                quantity=1
-            ))
-
-        db.session.commit()
-        return jsonify({"status": "added"})
-
-    # ================= UPDATE CART =================
+    # ================= UPDATE CART (ADD / + / -) =================
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
@@ -165,39 +151,34 @@ def create_app():
             product_id=product_id
         ).first()
 
-        if not item:
-            return jsonify({"status": "error"})
-
         if action == "increase":
-            item.quantity += 1
-        elif action == "decrease":
-            if item.quantity > 1:
-                item.quantity -= 1
+            if item:
+                item.quantity += 1
             else:
-                db.session.delete(item)
-                db.session.commit()
-                return jsonify({"removed": True})
+                item = Cart(
+                    user_id=current_user.id,
+                    product_id=product_id,
+                    quantity=1
+                )
+                db.session.add(item)
+
+        elif action == "decrease":
+            if item:
+                item.quantity -= 1
+                if item.quantity <= 0:
+                    db.session.delete(item)
+                    db.session.commit()
+                    return jsonify({"quantity": 0})
 
         db.session.commit()
 
-        product = Product.query.get(product_id)
-        subtotal = product.price * item.quantity
-
-        items = db.session.query(Cart, Product).join(
-            Product, Cart.product_id == Product.id
-        ).filter(
-            Cart.user_id == current_user.id
-        ).all()
-
-        total = sum(p.price * c.quantity for c, p in items)
+        quantity = item.quantity if item else 0
 
         return jsonify({
-            "quantity": item.quantity,
-            "subtotal": subtotal,
-            "total": total
+            "quantity": quantity
         })
 
-    # ================= CART =================
+    # ================= CART PAGE =================
     @app.route("/cart")
     @login_required
     def cart():
@@ -207,8 +188,8 @@ def create_app():
             Cart.user_id == current_user.id
         ).all()
 
-        cart_items = []
         total = 0
+        cart_items = []
 
         for cart_item, product in items:
             subtotal = product.price * cart_item.quantity
@@ -267,50 +248,12 @@ def create_app():
 
         return render_template("orders.html", orders=orders)
 
-    # ================= ORDER DETAILS =================
-    @app.route("/order/<order_number>")
-    @login_required
-    def order_details(order_number):
-        orders = Order.query.filter_by(
-            order_number=order_number,
-            username=current_user.username
-        ).all()
-
-        if not orders:
-            flash("Order not found")
-            return redirect("/my_orders")
-
-        return render_template(
-            "order_details.html",
-            orders=orders,
-            order_number=order_number
-        )
-
-    # ================= PROFILE =================
-    @app.route("/profile")
-    @login_required
-    def profile():
-        network_count = User.query.filter_by(
-            referred_by=current_user.referral_code
-        ).count()
-
-        total_pv = current_user.points or 0
-        wallet_balance = total_pv * 2
-
-        return render_template(
-            "profile.html",
-            user=current_user,
-            network_count=network_count,
-            total_pv=total_pv,
-            wallet_balance=wallet_balance
-        )
-
     return app
 
 
 # 🔥 IMPORTANT FOR GUNICORN
 app = create_app()
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-
