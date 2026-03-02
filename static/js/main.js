@@ -1,5 +1,5 @@
 /* =====================================================
-   INDEX MART - FINAL PROFESSIONAL VERSION
+   INDEX MART - AUTO RELOAD VERSION
 ===================================================== */
 
 
@@ -36,7 +36,7 @@ function switchToLogin() {
 }
 
 
-/* ================= AUTO OPEN LOGIN (?login=1) ================= */
+/* ================= AUTO OPEN LOGIN ================= */
 
 document.addEventListener("DOMContentLoaded", function () {
     const params = new URLSearchParams(window.location.search);
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 /* =====================================================
-   ADD TO CART → CONVERT BUTTON TO QUANTITY CONTROL
+   ADD TO CART
 ===================================================== */
 
 function addToCart(productId) {
@@ -78,7 +78,9 @@ function addToCart(productId) {
                 <button class="qty-btn"
                     onclick="changeQty(${productId}, 'decrease')">-</button>
 
-                <span id="qty-${productId}" class="qty-number">1</span>
+                <span id="qty-${productId}" class="qty-number">
+                    ${data.quantity}
+                </span>
 
                 <button class="qty-btn"
                     onclick="changeQty(${productId}, 'increase')">+</button>
@@ -116,50 +118,36 @@ function changeQty(productId, action) {
 
         if (!data) return;
 
-        const row = document.getElementById(`row-${productId}`);
-        const container = document.getElementById(`cart-control-${productId}`);
+        const currentPath = window.location.pathname;
 
-        /* ===== ITEM REMOVED ===== */
+        /* ===== IF ON CART PAGE → AUTO RELOAD ===== */
+        if (currentPath === "/cart") {
+
+            // small delay for smooth UX
+            setTimeout(() => {
+                location.reload();
+            }, 200);
+
+            return;
+        }
+
+        /* ===== INDEX PAGE LIVE UPDATE ===== */
+
         if (data.removed) {
-
-            // If cart page → remove row
-            if (row) {
-                row.remove();
-            }
-
-            // If index page → convert back to Add button
-            if (container && !row) {
+            const container = document.getElementById(`cart-control-${productId}`);
+            if (container) {
                 container.innerHTML = `
                     <button onclick="addToCart(${productId})">
                         Add to Cart
                     </button>
                 `;
             }
-
-            if (data.total !== undefined) {
-                const totalEl = document.getElementById("cart-total");
-                if (totalEl) totalEl.innerText = "₹" + data.total;
-            }
-
             return;
         }
 
-        /* ===== UPDATE QUANTITY ===== */
         const qtyEl = document.getElementById(`qty-${productId}`);
         if (qtyEl && data.quantity !== undefined) {
             qtyEl.innerText = data.quantity;
-        }
-
-        /* ===== UPDATE SUBTOTAL (Cart Page) ===== */
-        const subtotalEl = document.getElementById(`subtotal-${productId}`);
-        if (subtotalEl && data.subtotal !== undefined) {
-            subtotalEl.innerText = data.subtotal;
-        }
-
-        /* ===== UPDATE TOTAL ===== */
-        const totalEl = document.getElementById("cart-total");
-        if (totalEl && data.total !== undefined) {
-            totalEl.innerText = data.total;
         }
 
     })
@@ -168,7 +156,7 @@ function changeQty(productId, action) {
 
 
 /* =====================================================
-   LIVE SEARCH (NAVBAR DROPDOWN)
+   LIVE SEARCH
 ===================================================== */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -183,7 +171,6 @@ document.addEventListener("DOMContentLoaded", function () {
     searchInput.addEventListener("input", function () {
 
         clearTimeout(debounceTimer);
-
         const query = this.value.trim();
 
         if (query.length < 2) {
@@ -222,35 +209,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
 
                     searchResults.style.display = "block";
-                })
-                .catch(error => console.error("Search Error:", error));
+                });
 
         }, 300);
     });
 
-    document.addEventListener("click", function (e) {
-        if (!searchInput.contains(e.target) &&
-            !searchResults.contains(e.target)) {
-            searchResults.style.display = "none";
-        }
-    });
-});
-
-
-/* =====================================================
-   CLOSE MODAL ON OUTSIDE CLICK
-===================================================== */
-
-window.addEventListener("click", function (event) {
-
-    const loginModal = document.getElementById("loginModal");
-    const registerModal = document.getElementById("registerModal");
-
-    if (loginModal && event.target === loginModal) {
-        closeLogin();
-    }
-
-    if (registerModal && event.target === registerModal) {
-        closeRegister();
-    }
 });
