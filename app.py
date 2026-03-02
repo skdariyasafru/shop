@@ -1,10 +1,13 @@
+import os
+import uuid
+from datetime import datetime
+
 from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from db import init_db, db
 from models.models import User, Product, Cart, Order
 from config import Config
-
 
 
 login_manager = LoginManager()
@@ -30,31 +33,25 @@ def create_app():
     def unauthorized():
         return redirect("/?login=1")
 
-    # ================= HOME =================
+    # =================================================
+    # HOME
+    # =================================================
     @app.route("/")
     def index():
-        page = request.args.get("page", 1, type=int)
-        per_page = 20
-        search = request.args.get("q", "")
+        search = request.args.get("q", "").strip()
 
         query = Product.query
 
         if search:
             query = query.filter(Product.name.ilike(f"%{search}%"))
 
-        products = query.order_by(Product.id.desc()).paginate(
-            page=page,
-            per_page=per_page,
-            error_out=False
-        )
+        products = query.order_by(Product.id.desc()).all()
 
-        return render_template(
-            "index.html",
-            products=products.items,
-            pagination=products
-        )
+        return render_template("index.html", products=products)
 
-    # ================= LIVE SEARCH =================
+    # =================================================
+    # LIVE SEARCH
+    # =================================================
     @app.route("/search")
     def search():
         query = request.args.get("q", "").strip()
@@ -99,6 +96,7 @@ def create_app():
             return redirect("/?login=1")
 
         login_user(user)
+        flash("Login successful")
         return redirect("/")
 
     # =================================================
@@ -115,7 +113,7 @@ def create_app():
             flash("User already exists")
             return redirect("/?login=1")
 
-        user = User(
+        new_user = User(
             username=username,
             password=password,
             phone=phone,
@@ -124,7 +122,7 @@ def create_app():
             points=0
         )
 
-        db.session.add(user)
+        db.session.add(new_user)
         db.session.commit()
 
         flash("Registration successful")
@@ -137,6 +135,7 @@ def create_app():
     @login_required
     def logout():
         logout_user()
+        flash("Logged out")
         return redirect("/")
 
     # =================================================
@@ -155,17 +154,23 @@ def create_app():
         if item:
             item.quantity += 1
         else:
-            db.session.add(Cart(
+            item = Cart(
                 user_id=current_user.id,
                 product_id=product_id,
                 quantity=1
-            ))
+            )
+            db.session.add(item)
 
         db.session.commit()
 
-        return jsonify({"status": "added"})
+        return jsonify({
+            "status": "added",
+            "quantity": item.quantity
+        })
 
-    # ================= UPDATE CART =================
+    # =================================================
+    # UPDATE CART (+ / -)
+    # =================================================
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
@@ -179,10 +184,11 @@ def create_app():
         ).first()
 
         if not item:
-            return jsonify({"status": "error"})
+            return jsonify({"error": "Item not found"}), 404
 
         if action == "increase":
             item.quantity += 1
+
         elif action == "decrease":
             if item.quantity > 1:
                 item.quantity -= 1
@@ -196,6 +202,7 @@ def create_app():
         product = Product.query.get(product_id)
         subtotal = product.price * item.quantity
 
+        # calculate full cart total
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
@@ -210,14 +217,16 @@ def create_app():
             "total": total
         })
 
-    # ================= CART =================
+    # =================================================
+    # CART PAGE
+    # =================================================
     @app.route("/cart")
     @login_required
     def cart():
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
-            Cart.user_id=current_user.id
+            Cart.user_id == current_user.id
         ).all()
 
         cart_items = []
@@ -243,10 +252,11 @@ def create_app():
     @app.route("/checkout")
     @login_required
     def checkout():
+
         cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
         if not cart_items:
-            flash("Cart empty")
+            flash("Cart is empty")
             return redirect("/")
 
         order_number = "ORD-" + datetime.now().strftime("%Y%m%d%H%M%S")
@@ -254,7 +264,7 @@ def create_app():
         for item in cart_items:
             product = Product.query.get(item.product_id)
 
-            db.session.add(Order(
+            order = Order(
                 order_number=order_number,
                 username=current_user.username,
                 phone=current_user.phone,
@@ -264,7 +274,9 @@ def create_app():
                 quantity=item.quantity,
                 total=product.price * item.quantity,
                 status="Pending"
-            ))
+            )
+
+            db.session.add(order)
 
         Cart.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
@@ -273,7 +285,7 @@ def create_app():
         return redirect("/my_orders")
 
     # =================================================
-    # MY ORDERS  (WORKING)
+    # MY ORDERS
     # =================================================
     @app.route("/my_orders")
     @login_required
@@ -290,6 +302,7 @@ def create_app():
     @app.route("/order/<order_number>")
     @login_required
     def order_details(order_number):
+
         orders = Order.query.filter_by(
             order_number=order_number,
             username=current_user.username
@@ -317,6 +330,7 @@ def create_app():
 
 
 app = create_app()
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)s
+    app.run(host="0.0.0.0", port=port)
