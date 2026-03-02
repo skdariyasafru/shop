@@ -3,27 +3,23 @@
 
 {% block content %}
 
-<!-- ===== SEARCH BAR ===== -->
-<div class="search-wrapper">
-    <input type="text"
-           id="searchInput"
-           placeholder="Search products..."
-           onkeyup="liveSearch()"
-           autocomplete="off">
-</div>
-
 <!-- ===== PRODUCT GRID ===== -->
 <div class="grid" id="productContainer">
     {% if products %}
         {% for product in products %}
         <div class="card">
+
             <img src="{{ product.image }}" alt="{{ product.name }}">
             <h3>{{ product.name }}</h3>
             <p class="price">₹{{ product.price }}</p>
 
-           <button onclick="addToCart({{ product.id }}, this)">
-    Add to Cart
-</button>
+            <!-- Cart Control Container -->
+            <div id="cart-control-{{ product.id }}">
+                <button onclick="addToCart({{ product.id }}, this)">
+                    Add to Cart
+                </button>
+            </div>
+
         </div>
         {% endfor %}
     {% else %}
@@ -31,76 +27,9 @@
     {% endif %}
 </div>
 
-<!-- ===== JAVASCRIPT ===== -->
-<script>
-
-// ---------- LIVE SEARCH ----------
-function liveSearch() {
-    const query = document.getElementById("searchInput").value;
-
-    if (query.length === 0) {
-        location.reload();
-        return;
-    }
-
-    fetch(`/search?q=${query}`)
-    .then(res => res.json())
-    .then(data => {
-        const container = document.getElementById("productContainer");
-        container.innerHTML = "";
-
-        if (data.length === 0) {
-            container.innerHTML = "<p>No products found</p>";
-            return;
-        }
-
-        data.forEach(p => {
-            container.innerHTML += `
-                <div class="card">
-                    <img src="${p.image}" alt="${p.name}">
-                    <h3>${p.name}</h3>
-                    <p class="price">₹${p.price}</p>
-                    <button onclick="addToCart(${p.id})">
-                        Add to Cart
-                    </button>
-                </div>
-            `;
-        });
-    });
-}
-
-// ---------- ADD TO CART ----------
-function addToCart(id) {
-    fetch("/add_to_cart", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ id: id })
-    })
-    .then(res => {
-        if (res.status === 401) {
-            window.location.href = "/?login=1";
-        } else {
-            window.location.href = "/cart";
-        }
-    });
-}
-
-</script>
 
 <!-- ===== STYLES ===== -->
 <style>
-
-.search-wrapper {
-    margin-bottom: 20px;
-}
-
-#searchInput {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-}
 
 .grid {
     display: grid;
@@ -144,6 +73,29 @@ button {
 
 button:hover {
     background: #0056b3;
+}
+
+/* Quantity Style */
+.qty-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.qty-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.qty-number {
+    font-weight: bold;
+    min-width: 20px;
 }
 
 </style>

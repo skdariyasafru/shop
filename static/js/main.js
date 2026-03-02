@@ -1,9 +1,9 @@
 /* =====================================================
-   INDEX MART - MAIN JS (FINAL MERGED VERSION)
+   INDEX MART - FINAL CLEAN PROFESSAL VERSION
 ===================================================== */
 
 
-/* ================= LOGIN / REGISTER MODALS ================= */
+/* ================= MODAL FUNCTIONS ================= */
 
 function openLogin() {
     const modal = document.getElementById("loginModal");
@@ -36,11 +36,21 @@ function switchToLogin() {
 }
 
 
-/* ================= ADD TO CART ================= */
+/* ================= AUTO OPEN LOGIN (?login=1) ================= */
 
-function addToCart(productId, button) {
+document.addEventListener("DOMContentLoaded", function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("login") === "1") {
+        openLogin();
+    }
+});
 
-    if (!productId) return;
+
+/* =====================================================
+   ADD TO CART → CONVERT TO QUANTITY CONTROLLER
+===================================================== */
+
+function addToCart(productId) {
 
     fetch("/add_to_cart", {
         method: "POST",
@@ -49,8 +59,8 @@ function addToCart(productId, button) {
     })
     .then(response => {
 
-        if (response.status === 401) {
-            openLogin();
+        if (response.status === 401 || response.status === 302) {
+            window.location.href = "/?login=1";
             return null;
         }
 
@@ -58,26 +68,32 @@ function addToCart(productId, button) {
     })
     .then(data => {
 
-        if (data && data.status === "added" && button) {
+        if (!data || data.status !== "added") return;
 
-            button.innerText = "Added ✓";
-            button.disabled = true;
-            button.style.background = "#28a745";
-            button.style.color = "#fff";
-            button.style.cursor = "not-allowed";
-            button.style.opacity = "0.9";
-        }
+        const container = document.getElementById(`cart-control-${productId}`);
+        if (!container) return;
 
+        container.innerHTML = `
+            <div class="qty-control">
+                <button class="qty-btn"
+                    onclick="changeQty(${productId}, 'decrease')">-</button>
+
+                <span id="qty-${productId}" class="qty-number">1</span>
+
+                <button class="qty-btn"
+                    onclick="changeQty(${productId}, 'increase')">+</button>
+            </div>
+        `;
     })
-    .catch(error => {
-        console.error("Add To Cart Error:", error);
-    });
+    .catch(error => console.error("Add To Cart Error:", error));
 }
 
 
-/* ================= FULLY DYNAMIC CART ================= */
+/* =====================================================
+   CHANGE QUANTITY (+ / -)
+===================================================== */
 
-function updateCart(productId, action) {
+function changeQty(productId, action) {
 
     fetch("/update_cart", {
         method: "POST",
@@ -90,48 +106,48 @@ function updateCart(productId, action) {
     .then(response => response.json())
     .then(data => {
 
-        // Item removed
+        const container = document.getElementById(`cart-control-${productId}`);
+
+        // If item removed → show Add button again
         if (data.removed) {
 
-            const row = document.getElementById("row-" + productId);
-
-            if (row) {
-                row.style.transition = "0.3s ease";
-                row.style.opacity = "0";
-                row.style.transform = "translateX(-20px)";
-
-                setTimeout(() => {
-                    row.remove();
-                }, 300);
+            if (container) {
+                container.innerHTML = `
+                    <button onclick="addToCart(${productId})">
+                        Add to Cart
+                    </button>
+                `;
             }
-
-            const totalEl = document.getElementById("cart-total");
-            if (totalEl && data.total !== undefined)
-                totalEl.innerText = data.total;
 
             return;
         }
 
-        // Quantity updated
-        if (data.quantity !== undefined) {
+        // Update quantity visually
+        const qtyElement = document.getElementById(`qty-${productId}`);
+        if (qtyElement) {
+            qtyElement.innerText = data.quantity;
+        }
 
-            const qtyEl = document.getElementById("qty-" + productId);
-            const subEl = document.getElementById("subtotal-" + productId);
-            const totalEl = document.getElementById("cart-total");
+        // If on cart page update totals
+        const subtotalEl = document.getElementById(`subtotal-${productId}`);
+        const totalEl = document.getElementById("cart-total");
 
-            if (qtyEl) qtyEl.innerText = data.quantity;
-            if (subEl) subEl.innerText = data.subtotal;
-            if (totalEl) totalEl.innerText = data.total;
+        if (subtotalEl && data.subtotal !== undefined) {
+            subtotalEl.innerText = "₹" + data.subtotal;
+        }
+
+        if (totalEl && data.total !== undefined) {
+            totalEl.innerText = "₹" + data.total;
         }
 
     })
-    .catch(error => {
-        console.error("Cart Update Error:", error);
-    });
+    .catch(error => console.error("Quantity Update Error:", error));
 }
 
 
-/* ================= LIVE SEARCH ================= */
+/* =====================================================
+   LIVE SEARCH (NAVBAR DROPDOWN)
+===================================================== */
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -185,9 +201,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     searchResults.style.display = "block";
                 })
-                .catch(error => {
-                    console.error("Search Error:", error);
-                });
+                .catch(error => console.error("Search Error:", error));
 
         }, 300);
     });
@@ -198,13 +212,14 @@ document.addEventListener("DOMContentLoaded", function () {
             searchResults.style.display = "none";
         }
     });
-
 });
 
 
-/* ================= CLOSE MODAL OUTSIDE ================= */
+/* =====================================================
+   CLOSE MODAL OUTSIDE CLICK
+===================================================== */
 
-window.addEventListener("click", function(event) {
+window.addEventListener("click", function (event) {
 
     const loginModal = document.getElementById("loginModal");
     const registerModal = document.getElementById("registerModal");

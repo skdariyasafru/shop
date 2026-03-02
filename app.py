@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+
 from db import init_db, db
 from models.models import User, Product, Cart, Order
 from config import Config
-from datetime import datetime
-import uuid
+
 
 
 login_manager = LoginManager()
@@ -40,9 +40,13 @@ def create_app():
         query = Product.query
 
         if search:
-            query = query.filter(Product.name.ilike(f"{search}%"))
+            query = query.filter(Product.name.ilike(f"%{search}%"))
 
-        products = query.paginate(page=page, per_page=per_page, error_out=False)
+        products = query.order_by(Product.id.desc()).paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
 
         return render_template(
             "index.html",
@@ -59,7 +63,7 @@ def create_app():
             return jsonify([])
 
         products = Product.query.filter(
-            Product.name.ilike(f"{query}%")
+            Product.name.ilike(f"%{query}%")
         ).limit(10).all()
 
         return jsonify([
@@ -72,13 +76,17 @@ def create_app():
             for p in products
         ])
 
-    # ================= PRODUCT DETAIL =================
+    # =================================================
+    # PRODUCT DETAIL
+    # =================================================
     @app.route("/product/<int:id>")
     def product_detail(id):
         product = Product.query.get_or_404(id)
         return render_template("product_detail.html", product=product)
 
-    # ================= LOGIN =================
+    # =================================================
+    # LOGIN
+    # =================================================
     @app.route("/login", methods=["POST"])
     def login():
         username = request.form.get("username")
@@ -93,7 +101,9 @@ def create_app():
         login_user(user)
         return redirect("/")
 
-    # ================= REGISTER =================
+    # =================================================
+    # REGISTER
+    # =================================================
     @app.route("/register", methods=["POST"])
     def register():
         username = request.form.get("username")
@@ -120,14 +130,18 @@ def create_app():
         flash("Registration successful")
         return redirect("/?login=1")
 
-    # ================= LOGOUT =================
+    # =================================================
+    # LOGOUT
+    # =================================================
     @app.route("/logout")
     @login_required
     def logout():
         logout_user()
         return redirect("/")
 
-    # ================= ADD TO CART =================
+    # =================================================
+    # ADD TO CART
+    # =================================================
     @app.route("/add_to_cart", methods=["POST"])
     @login_required
     def add_to_cart():
@@ -148,6 +162,7 @@ def create_app():
             ))
 
         db.session.commit()
+
         return jsonify({"status": "added"})
 
     # ================= UPDATE CART =================
@@ -222,7 +237,9 @@ def create_app():
 
         return render_template("cart.html", items=cart_items, total=total)
 
-    # ================= CHECKOUT =================
+    # =================================================
+    # CHECKOUT
+    # =================================================
     @app.route("/checkout")
     @login_required
     def checkout():
@@ -255,7 +272,9 @@ def create_app():
         flash("Order placed successfully!")
         return redirect("/my_orders")
 
-    # ================= MY ORDERS =================
+    # =================================================
+    # MY ORDERS  (WORKING)
+    # =================================================
     @app.route("/my_orders")
     @login_required
     def my_orders():
@@ -265,7 +284,9 @@ def create_app():
 
         return render_template("orders.html", orders=orders)
 
-    # ================= ORDER DETAILS =================
+    # =================================================
+    # ORDER DETAILS
+    # =================================================
     @app.route("/order/<order_number>")
     @login_required
     def order_details(order_number):
@@ -283,6 +304,14 @@ def create_app():
             orders=orders,
             order_number=order_number
         )
+
+    # =================================================
+    # PROFILE
+    # =================================================
+    @app.route("/profile")
+    @login_required
+    def profile():
+        return render_template("profile.html", user=current_user)
 
     return app
 
