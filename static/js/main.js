@@ -1,7 +1,5 @@
-
-
 /* =====================================================
-   INDEX MART - CLEAN PROFESSIONAL VERSION
+   INDEX MART - FINAL CLEAN PROFESSAL VERSION
 ===================================================== */
 
 
@@ -41,20 +39,18 @@ function switchToLogin() {
 /* ================= AUTO OPEN LOGIN (?login=1) ================= */
 
 document.addEventListener("DOMContentLoaded", function () {
-
     const params = new URLSearchParams(window.location.search);
     if (params.get("login") === "1") {
         openLogin();
     }
-
 });
 
 
-/* ================= ADD TO CART ================= */
+/* =====================================================
+   ADD TO CART → CONVERT TO QUANTITY CONTROLLER
+===================================================== */
 
-function addToCart(productId, button = null) {
-
-    if (!productId) return;
+function addToCart(productId) {
 
     fetch("/add_to_cart", {
         method: "POST",
@@ -63,8 +59,7 @@ function addToCart(productId, button = null) {
     })
     .then(response => {
 
-        // If not logged in (Flask redirect)
-        if (response.status === 302 || response.status === 401) {
+        if (response.status === 401 || response.status === 302) {
             window.location.href = "/?login=1";
             return null;
         }
@@ -73,57 +68,31 @@ function addToCart(productId, button = null) {
     })
     .then(data => {
 
-        if (!data) return;
+        if (!data || data.status !== "added") return;
 
-        if (data.status === "added") {
+        const container = document.getElementById(`cart-control-${productId}`);
+        if (!container) return;
 
-            if (button) {
-                button.innerText = "Added ✓";
-                button.disabled = true;
-                button.style.background = "#28a745";
-                button.style.color = "#fff";
-                button.style.cursor = "not-allowed";
-            }
+        container.innerHTML = `
+            <div class="qty-control">
+                <button class="qty-btn"
+                    onclick="changeQty(${productId}, 'decrease')">-</button>
 
-            console.log("Item added successfully");
-        }
+                <span id="qty-${productId}" class="qty-number">1</span>
 
+                <button class="qty-btn"
+                    onclick="changeQty(${productId}, 'increase')">+</button>
+            </div>
+        `;
     })
     .catch(error => console.error("Add To Cart Error:", error));
 }
 
 
-/* ================= UPDATE CART ================= */
+/* =====================================================
+   CHANGE QUANTITY (+ / -)
+===================================================== */
 
-function updateCart(productId, action) {
-
-    fetch("/update_cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id: productId,
-            action: action
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-
-        if (data.removed) {
-            location.reload();
-            return;
-        }
-
-        const qtyEl = document.getElementById(`qty-${productId}`);
-        const subtotalEl = document.getElementById(`subtotal-${productId}`);
-        const totalEl = document.getElementById("cart-total");
-
-        if (qtyEl) qtyEl.innerText = data.quantity;
-        if (subtotalEl) subtotalEl.innerText = "₹" + data.subtotal;
-        if (totalEl) totalEl.innerText = "₹" + data.total;
-
-    })
-    .catch(error => console.error("Cart Update Error:", error));
-}
 function changeQty(productId, action) {
 
     fetch("/update_cart", {
@@ -137,28 +106,48 @@ function changeQty(productId, action) {
     .then(response => response.json())
     .then(data => {
 
+        const container = document.getElementById(`cart-control-${productId}`);
+
+        // If item removed → show Add button again
         if (data.removed) {
-            const container = document.getElementById(`cart-control-${productId}`);
+
             if (container) {
                 container.innerHTML = `
-                    <button onclick="addToCart(${productId}, this)">
+                    <button onclick="addToCart(${productId})">
                         Add to Cart
                     </button>
                 `;
             }
+
             return;
         }
 
-        const qtyEl = document.getElementById(`qty-${productId}`);
-        if (qtyEl) qtyEl.innerText = data.quantity;
+        // Update quantity visually
+        const qtyElement = document.getElementById(`qty-${productId}`);
+        if (qtyElement) {
+            qtyElement.innerText = data.quantity;
+        }
+
+        // If on cart page update totals
+        const subtotalEl = document.getElementById(`subtotal-${productId}`);
+        const totalEl = document.getElementById("cart-total");
+
+        if (subtotalEl && data.subtotal !== undefined) {
+            subtotalEl.innerText = "₹" + data.subtotal;
+        }
+
+        if (totalEl && data.total !== undefined) {
+            totalEl.innerText = "₹" + data.total;
+        }
 
     })
-    .catch(error => {
-        console.error("Quantity Error:", error);
-    });
+    .catch(error => console.error("Quantity Update Error:", error));
 }
 
-/* ================= LIVE SEARCH (NAVBAR DROPDOWN) ================= */
+
+/* =====================================================
+   LIVE SEARCH (NAVBAR DROPDOWN)
+===================================================== */
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -223,11 +212,12 @@ document.addEventListener("DOMContentLoaded", function () {
             searchResults.style.display = "none";
         }
     });
-
 });
 
 
-/* ================= CLOSE MODAL ON OUTSIDE CLICK ================= */
+/* =====================================================
+   CLOSE MODAL OUTSIDE CLICK
+===================================================== */
 
 window.addEventListener("click", function (event) {
 
@@ -241,4 +231,4 @@ window.addEventListener("click", function (event) {
     if (registerModal && event.target === registerModal) {
         closeRegister();
     }
-}); 
+});
