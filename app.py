@@ -4,6 +4,7 @@ from datetime import datetime
 
 from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from sqlalchemy import func
 
 from db import init_db, db
 from models.models import User, Product, Cart, Order
@@ -146,6 +147,10 @@ def create_app():
     def add_to_cart():
         product_id = request.json.get("id")
 
+        product = Product.query.get(product_id)
+        if not product:
+            return jsonify({"error": "Product not found"}), 404
+
         item = Cart.query.filter_by(
             user_id=current_user.id,
             product_id=product_id
@@ -174,56 +179,64 @@ def create_app():
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
+
         data = request.get_json()
         product_id = data.get("id")
         action = data.get("action")
-    
+
         item = Cart.query.filter_by(
             user_id=current_user.id,
             product_id=product_id
         ).first()
-    
+
         if not item:
             return jsonify({"error": "Item not found"}), 404
-    
+
         if action == "increase":
             item.quantity += 1
-    
+
         elif action == "decrease":
             if item.quantity > 1:
                 item.quantity -= 1
             else:
                 db.session.delete(item)
                 db.session.commit()
-                return jsonify({"removed": True})
-    
+
+                total = db.session.query(
+                    func.sum(Product.price * Cart.quantity)
+                ).join(Product).filter(
+                    Cart.user_id == current_user.id
+                ).scalar() or 0
+
+                return jsonify({
+                    "removed": True,
+                    "total": total
+                })
+
         db.session.commit()
-    
+
         product = Product.query.get(product_id)
         subtotal = product.price * item.quantity
-    
-        # Calculate new total
-        items = db.session.query(Cart, Product).join(
-            Product, Cart.product_id == Product.id
-        ).filter(
+
+        total = db.session.query(
+            func.sum(Product.price * Cart.quantity)
+        ).join(Product).filter(
             Cart.user_id == current_user.id
-        ).all()
-    
-        total = sum(p.price * c.quantity for c, p in items)
-    
+        ).scalar() or 0
+
         return jsonify({
             "quantity": item.quantity,
             "subtotal": subtotal,
             "total": total
         })
-        
-    
+
     # =================================================
     # CART PAGE
     # =================================================
     @app.route("/cart")
     @login_required
     def cart():
+
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
