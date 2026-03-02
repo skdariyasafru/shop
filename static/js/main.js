@@ -1,5 +1,5 @@
 /* =====================================================
-   INDEX MART - FINAL CLEAN PROFESSAL VERSION
+   INDEX MART - FINAL PROFESSIONAL VERSION
 ===================================================== */
 
 
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 /* =====================================================
-   ADD TO CART → CONVERT TO QUANTITY CONTROLLER
+   ADD TO CART → CONVERT BUTTON TO QUANTITY CONTROL
 ===================================================== */
 
 function addToCart(productId) {
@@ -92,6 +92,7 @@ function addToCart(productId) {
 /* =====================================================
    CHANGE QUANTITY (+ / -)
 ===================================================== */
+
 function changeQty(productId, action) {
 
     fetch("/update_cart", {
@@ -102,41 +103,60 @@ function changeQty(productId, action) {
             action: action
         })
     })
-    .then(response => response.json())
+    .then(response => {
+
+        if (response.status === 401 || response.status === 302) {
+            window.location.href = "/?login=1";
+            return null;
+        }
+
+        return response.json();
+    })
     .then(data => {
 
-        const container = document.getElementById(`cart-control-${productId}`);
-        const row = document.getElementById(`row-${productId}`);
+        if (!data) return;
 
-        // If removed
+        const row = document.getElementById(`row-${productId}`);
+        const container = document.getElementById(`cart-control-${productId}`);
+
+        /* ===== ITEM REMOVED ===== */
         if (data.removed) {
 
+            // If cart page → remove row
             if (row) {
                 row.remove();
             }
 
-            // Update total if returned
-            const totalEl = document.getElementById("cart-total");
-            if (totalEl && data.total !== undefined) {
-                totalEl.innerText = "₹" + data.total;
+            // If index page → convert back to Add button
+            if (container && !row) {
+                container.innerHTML = `
+                    <button onclick="addToCart(${productId})">
+                        Add to Cart
+                    </button>
+                `;
+            }
+
+            if (data.total !== undefined) {
+                const totalEl = document.getElementById("cart-total");
+                if (totalEl) totalEl.innerText = "₹" + data.total;
             }
 
             return;
         }
 
-        // Update quantity
-        const qtyElement = document.getElementById(`qty-${productId}`);
-        if (qtyElement) {
-            qtyElement.innerText = data.quantity;
+        /* ===== UPDATE QUANTITY ===== */
+        const qtyEl = document.getElementById(`qty-${productId}`);
+        if (qtyEl && data.quantity !== undefined) {
+            qtyEl.innerText = data.quantity;
         }
 
-        // Update subtotal
+        /* ===== UPDATE SUBTOTAL (Cart Page) ===== */
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
         if (subtotalEl && data.subtotal !== undefined) {
             subtotalEl.innerText = data.subtotal;
         }
 
-        // Update total
+        /* ===== UPDATE TOTAL ===== */
         const totalEl = document.getElementById("cart-total");
         if (totalEl && data.total !== undefined) {
             totalEl.innerText = data.total;
@@ -145,6 +165,7 @@ function changeQty(productId, action) {
     })
     .catch(error => console.error("Quantity Update Error:", error));
 }
+
 
 /* =====================================================
    LIVE SEARCH (NAVBAR DROPDOWN)
@@ -217,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 /* =====================================================
-   CLOSE MODAL OUTSIDE CLICK
+   CLOSE MODAL ON OUTSIDE CLICK
 ===================================================== */
 
 window.addEventListener("click", function (event) {
