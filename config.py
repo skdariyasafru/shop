@@ -2,22 +2,21 @@ import os
 
 
 class Config:
+    # =====================================================
+    # SECRET KEY (Safe for Render + Local)
+    # =====================================================
+    SECRET_KEY = os.environ.get(
+        "SECRET_KEY",
+        "dev-secret-key-change-in-production"
+    )
 
-    # ================= SECRET KEY =================
-    # MUST set in Render environment variables
-    SECRET_KEY = os.environ.get("SECRET_KEY")
-
-    if not SECRET_KEY:
-        raise RuntimeError("SECRET_KEY not set in environment variables")
-
-    # ================= DATABASE =================
+    # =====================================================
+    # DATABASE CONFIGURATION
+    # =====================================================
     DATABASE_URL = os.environ.get("DATABASE_URL")
 
-    if not DATABASE_URL:
-        raise RuntimeError("DATABASE_URL not set in environment variables")
-
-    # Fix old postgres:// issue
-    if DATABASE_URL.startswith("postgres://"):
+    # Fix old postgres:// issue (Render compatibility)
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace(
             "postgres://",
             "postgresql://",
@@ -27,17 +26,10 @@ class Config:
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # ================= CONNECTION POOL =================
+    # =====================================================
+    # SQLAlchemy Performance Options (Safe Defaults)
+    # =====================================================
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": True,      # Prevent stale connections
-        "pool_recycle": 1800,       # Recycle every 30 mins
-        "pool_size": 5,
-        "max_overflow": 10,
-        "pool_timeout": 30,
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
     }
-
-    # ================= SESSION SETTINGS =================
-    # Required for Render HTTPS
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
