@@ -1,58 +1,31 @@
-{% extends "base.html" %}
-{% block title %}Your Cart{% endblock %}
+{% for item in items %}
+<tr id="row-{{ item.product_id }}">
 
-{% block content %}
+    <td>{{ item.name }}</td>
 
-<h2>Your Cart</h2>
+    <td>₹{{ item.price }}</td>
 
-{% if items %}
+    <td>
+        <div id="cart-control-{{ item.product_id }}">
+            <div class="qty-control">
+                <button class="qty-btn"
+                    onclick="changeQty({{ item.product_id }}, 'decrease')">-</button>
 
-<div class="cart-container" id="cart-container">
+                <span id="qty-{{ item.product_id }}" class="qty-number">
+                    {{ item.quantity }}
+                </span>
 
-    {% for item in items %}
-    <div class="cart-item" id="row-{{ item.product_id }}">
-
-        <!-- Product Info -->
-        <div class="cart-info">
-            <h3>{{ item.name }}</h3>
-            <p>₹{{ item.price }}</p>
+                <button class="qty-btn"
+                    onclick="changeQty({{ item.product_id }}, 'increase')">+</button>
+            </div>
         </div>
+    </td>
 
-        <!-- Quantity Controls -->
-        <div class="quantity-box">
-            <button onclick="updateCart({{ item.product_id }}, 'decrease')">−</button>
+    <td>
+        ₹<span id="subtotal-{{ item.product_id }}">
+            {{ item.subtotal }}
+        </span>
+    </td>
 
-            <span id="qty-{{ item.product_id }}">
-                {{ item.quantity }}
-            </span>
-
-            <button onclick="updateCart({{ item.product_id }}, 'increase')">+</button>
-        </div>
-
-        <!-- Subtotal -->
-        <div class="cart-subtotal">
-            ₹<span id="subtotal-{{ item.product_id }}">
-                {{ item.subtotal }}
-            </span>
-        </div>
-
-    </div>
-    {% endfor %}
-
-</div>
-
-<h3>
-Total: ₹<span id="cart-total">{{ total }}</span>
-</h3>
-
-<a href="/checkout" class="checkout-btn">
-    Proceed to Checkout
-</a>
-
-{% else %}
-
-<p id="empty-message">Your cart is empty.</p>
-
-{% endif %}
-
-{% endblock %}
+</tr>
+{% endfor %}
