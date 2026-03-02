@@ -92,7 +92,6 @@ function addToCart(productId) {
 /* =====================================================
    CHANGE QUANTITY (+ / -)
 ===================================================== */
-
 function changeQty(productId, action) {
 
     fetch("/update_cart", {
@@ -107,43 +106,45 @@ function changeQty(productId, action) {
     .then(data => {
 
         const container = document.getElementById(`cart-control-${productId}`);
+        const row = document.getElementById(`row-${productId}`);
 
-        // If item removed → show Add button again
+        // If removed
         if (data.removed) {
 
-            if (container) {
-                container.innerHTML = `
-                    <button onclick="addToCart(${productId})">
-                        Add to Cart
-                    </button>
-                `;
+            if (row) {
+                row.remove();
+            }
+
+            // Update total if returned
+            const totalEl = document.getElementById("cart-total");
+            if (totalEl && data.total !== undefined) {
+                totalEl.innerText = "₹" + data.total;
             }
 
             return;
         }
 
-        // Update quantity visually
+        // Update quantity
         const qtyElement = document.getElementById(`qty-${productId}`);
         if (qtyElement) {
             qtyElement.innerText = data.quantity;
         }
 
-        // If on cart page update totals
+        // Update subtotal
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
-        const totalEl = document.getElementById("cart-total");
-
         if (subtotalEl && data.subtotal !== undefined) {
-            subtotalEl.innerText = "₹" + data.subtotal;
+            subtotalEl.innerText = data.subtotal;
         }
 
+        // Update total
+        const totalEl = document.getElementById("cart-total");
         if (totalEl && data.total !== undefined) {
-            totalEl.innerText = "₹" + data.total;
+            totalEl.innerText = data.total;
         }
 
     })
     .catch(error => console.error("Quantity Update Error:", error));
 }
-
 
 /* =====================================================
    LIVE SEARCH (NAVBAR DROPDOWN)
