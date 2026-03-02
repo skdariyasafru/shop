@@ -1,31 +1,152 @@
-{% for item in items %}
-<tr id="row-{{ item.product_id }}">
+{% extends "base.html" %}
+{% block title %}Cart{% endblock %}
 
-    <td>{{ item.name }}</td>
+{% block content %}
 
-    <td>₹{{ item.price }}</td>
+<h2 style="margin-bottom:20px;">🛒 Your Cart</h2>
 
-    <td>
-        <div id="cart-control-{{ item.product_id }}">
-            <div class="qty-control">
-                <button class="qty-btn"
-                    onclick="changeQty({{ item.product_id }}, 'decrease')">-</button>
+{% if items %}
 
-                <span id="qty-{{ item.product_id }}" class="qty-number">
-                    {{ item.quantity }}
+<table class="cart-table">
+
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for item in items %}
+        <tr id="row-{{ item.product_id }}">
+
+            <td>{{ item.name }}</td>
+
+            <td>₹{{ item.price }}</td>
+
+            <td>
+                <div id="cart-control-{{ item.product_id }}">
+                    <div class="qty-control">
+
+                        <button class="qty-btn"
+                            onclick="changeQty({{ item.product_id }}, 'decrease')">
+                            -
+                        </button>
+
+                        <span id="qty-{{ item.product_id }}" class="qty-number">
+                            {{ item.quantity }}
+                        </span>
+
+                        <button class="qty-btn"
+                            onclick="changeQty({{ item.product_id }}, 'increase')">
+                            +
+                        </button>
+
+                    </div>
+                </div>
+            </td>
+
+            <td>
+                ₹<span id="subtotal-{{ item.product_id }}">
+                    {{ item.subtotal }}
                 </span>
+            </td>
 
-                <button class="qty-btn"
-                    onclick="changeQty({{ item.product_id }}, 'increase')">+</button>
-            </div>
-        </div>
-    </td>
+        </tr>
+        {% endfor %}
 
-    <td>
-        ₹<span id="subtotal-{{ item.product_id }}">
-            {{ item.subtotal }}
-        </span>
-    </td>
+    </tbody>
 
-</tr>
-{% endfor %}
+</table>
+
+<!-- TOTAL SECTION -->
+<div class="cart-total-section">
+    <h3>
+        Total: ₹<span id="cart-total">{{ total }}</span>
+    </h3>
+
+    <a href="/checkout" class="checkout-btn">
+        Proceed to Checkout
+    </a>
+</div>
+
+{% else %}
+
+<p>Your cart is empty.</p>
+
+{% endif %}
+
+<!-- ================= STYLES ================= -->
+
+<style>
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.cart-table th,
+.cart-table td {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+.cart-table th {
+    background: #f8f8f8;
+}
+
+.qty-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.qty-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.qty-btn:hover {
+    background: #0056b3;
+}
+
+.qty-number {
+    font-weight: bold;
+    min-width: 25px;
+}
+
+.cart-total-section {
+    margin-top: 25px;
+    text-align: right;
+}
+
+.checkout-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.checkout-btn:hover {
+    background: #218838;
+}
+
+</style>
+
+{% endblock %}
