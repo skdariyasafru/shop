@@ -1,13 +1,10 @@
-import os
-import uuid
-from datetime import datetime
-
 from flask import Flask, request, jsonify, redirect, render_template, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from db import init_db, db
 from models.models import User, Product, Cart, Order
 from config import Config
+
 
 
 login_manager = LoginManager()
@@ -33,14 +30,12 @@ def create_app():
     def unauthorized():
         return redirect("/?login=1")
 
-    # =================================================
-    # HOME
-    # =================================================
+    # ================= HOME =================
     @app.route("/")
     def index():
         page = request.args.get("page", 1, type=int)
         per_page = 20
-        search = request.args.get("q", "").strip()
+        search = request.args.get("q", "")
 
         query = Product.query
 
@@ -59,9 +54,7 @@ def create_app():
             pagination=products
         )
 
-    # =================================================
-    # LIVE SEARCH
-    # =================================================
+    # ================= LIVE SEARCH =================
     @app.route("/search")
     def search():
         query = request.args.get("q", "").strip()
@@ -106,7 +99,6 @@ def create_app():
             return redirect("/?login=1")
 
         login_user(user)
-        flash("Login successful")
         return redirect("/")
 
     # =================================================
@@ -145,7 +137,6 @@ def create_app():
     @login_required
     def logout():
         logout_user()
-        flash("Logged out")
         return redirect("/")
 
     # =================================================
@@ -174,9 +165,7 @@ def create_app():
 
         return jsonify({"status": "added"})
 
-    # =================================================
-    # UPDATE CART (for + and - buttons)
-    # =================================================
+    # ================= UPDATE CART =================
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
@@ -194,7 +183,6 @@ def create_app():
 
         if action == "increase":
             item.quantity += 1
-
         elif action == "decrease":
             if item.quantity > 1:
                 item.quantity -= 1
@@ -222,16 +210,14 @@ def create_app():
             "total": total
         })
 
-    # =================================================
-    # CART PAGE
-    # =================================================
+    # ================= CART =================
     @app.route("/cart")
     @login_required
     def cart():
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
-            Cart.user_id == current_user.id
+            Cart.user_id=current_user.id
         ).all()
 
         cart_items = []
@@ -331,7 +317,6 @@ def create_app():
 
 
 app = create_app()
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port)s
