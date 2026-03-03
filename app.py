@@ -17,10 +17,10 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ================= DATABASE INIT =================
+    # ================= DATABASE =================
     init_db(app)
 
-    # ================= LOGIN MANAGER =================
+    # ================= LOGIN =================
     login_manager.init_app(app)
     login_manager.login_view = "login"
     login_manager.login_message = None
@@ -33,7 +33,6 @@ def create_app():
     def unauthorized():
         return jsonify({"error": "Unauthorized"}), 401
 
-
     # =================================================
     # HOME
     # =================================================
@@ -42,15 +41,14 @@ def create_app():
         products = Product.query.order_by(Product.id.desc()).all()
         return render_template("index.html", products=products)
 
-
     # =================================================
-    # SEARCH (AUTO LOAD + SINGLE LETTER SUPPORT)
+    # LIVE SEARCH (Single Letter Supported)
     # =================================================
     @app.route("/search")
     def search():
         query = request.args.get("q", "").strip()
 
-        if query == "":
+        if not query:
             products = Product.query.order_by(Product.id.desc()).all()
         else:
             products = Product.query.filter(
@@ -67,6 +65,13 @@ def create_app():
             for p in products
         ])
 
+    # =================================================
+    # PRODUCT DETAIL
+    # =================================================
+    @app.route("/product/<int:id>")
+    def product_detail(id):
+        product = Product.query.get_or_404(id)
+        return render_template("product_detail.html", product=product)
 
     # =================================================
     # LOGIN
@@ -86,7 +91,6 @@ def create_app():
         flash("Login successful")
         return redirect("/")
 
-
     # =================================================
     # REGISTER
     # =================================================
@@ -94,6 +98,8 @@ def create_app():
     def register():
         username = request.form.get("username")
         password = request.form.get("password")
+        phone = request.form.get("phone")
+        address = request.form.get("address")
 
         if User.query.filter_by(username=username).first():
             flash("User already exists")
@@ -102,6 +108,8 @@ def create_app():
         new_user = User(
             username=username,
             password=password,
+            phone=phone,
+            address=address,
             referral_code=str(uuid.uuid4())[:8],
             points=0
         )
@@ -112,7 +120,6 @@ def create_app():
         flash("Registration successful")
         return redirect("/?login=1")
 
-
     # =================================================
     # LOGOUT
     # =================================================
@@ -120,8 +127,8 @@ def create_app():
     @login_required
     def logout():
         logout_user()
+        flash("Logged out")
         return redirect("/")
-
 
     # =================================================
     # ADD TO CART
@@ -155,9 +162,8 @@ def create_app():
             "quantity": item.quantity
         })
 
-
     # =================================================
-    # UPDATE CART (FULLY DYNAMIC)
+    # UPDATE CART (Dynamic)
     # =================================================
     @app.route("/update_cart", methods=["POST"])
     @login_required
@@ -184,25 +190,21 @@ def create_app():
             else:
                 db.session.delete(item)
                 db.session.commit()
-
-                total = calculate_cart_total()
                 return jsonify({
                     "removed": True,
-                    "total": total
+                    "total": calculate_cart_total()
                 })
 
         db.session.commit()
 
         product = Product.query.get(product_id)
         subtotal = product.price * item.quantity
-        total = calculate_cart_total()
 
         return jsonify({
             "quantity": item.quantity,
             "subtotal": subtotal,
-            "total": total
+            "total": calculate_cart_total()
         })
-
 
     # =================================================
     # CART PAGE
@@ -234,9 +236,56 @@ def create_app():
 
         return render_template("cart.html", items=cart_items, total=total)
 
+    # =================================================
+    # CHECKOUT
+    # =================================================
+    @app.route("/checkout")
+    @login_required
+    def checkout():
+
+        cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+
+        if not cart_items:
+            flash("Cart is empty")
+            return redirect("/")
+
+        order_number = "ORD-" + datetime.now().strftime("%Y%m%d%H%M%S")
+
+        for item in cart_items:
+            product = Product.query.get(item.product_id)
+
+            db.session.add(Order(
+                order_number=order_number,
+                username=current_user.username,
+                phone=current_user.phone,
+                address=current_user.address,
+                product_name=product.name,
+                price=product.price,
+                quantity=item.quantity,
+                total=product.price * item.quantity,
+                status="Pending"
+            ))
+
+        Cart.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+
+        flash("Order placed successfully!")
+        return redirect("/my_orders")
 
     # =================================================
-    # HELPER FUNCTION
+    # MY ORDERS
+    # =================================================
+    @app.route("/my_orders")
+    @login_required
+    def my_orders():
+        orders = Order.query.filter_by(
+            username=current_user.username
+        ).order_by(Order.created_at.desc()).all()
+
+        return render_template("orders.html", orders=orders)
+
+    # =================================================
+    # HELPER
     # =================================================
     def calculate_cart_total():
         items = db.session.query(Cart, Product).join(
@@ -247,14 +296,8 @@ def create_app():
 
         return sum(p.price * c.quantity for c, p in items)
 
-
     return app
 
 
-# IMPORTANT FOR RENDER
+# 🔥 IMPORTANT FOR RENDER
 app = create_app()
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
