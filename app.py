@@ -44,18 +44,18 @@ def create_app():
 
 
     # =================================================
-    # SEARCH
+    # SEARCH (AUTO LOAD + SINGLE LETTER SUPPORT)
     # =================================================
     @app.route("/search")
     def search():
         query = request.args.get("q", "").strip()
 
-        if not query:
-            return jsonify([])
-
-        products = Product.query.filter(
-            Product.name.ilike(f"%{query}%")
-        ).limit(10).all()
+        if query == "":
+            products = Product.query.order_by(Product.id.desc()).all()
+        else:
+            products = Product.query.filter(
+                Product.name.ilike(f"%{query}%")
+            ).order_by(Product.id.desc()).all()
 
         return jsonify([
             {
