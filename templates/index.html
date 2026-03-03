@@ -3,14 +3,22 @@
 
 {% block content %}
 
+<!-- ===== SEARCH BAR ===== -->
+<input type="text" id="indexSearch" placeholder="Search products...">
+
 <!-- ===== PRODUCT GRID ===== -->
-<div class="grid">
+<div class="grid" id="productContainer">
 
     {% if products %}
         {% for product in products %}
         <div class="card">
 
-            <img src="{{ product.image }}" alt="{{ product.name }}">
+            {% if product.image %}
+                <img src="{{ product.image }}" alt="{{ product.name }}">
+            {% else %}
+                <div class="image-placeholder"></div>
+            {% endif %}
+
             <h3>{{ product.name }}</h3>
             <p class="price">₹{{ product.price }}</p>
 
@@ -29,6 +37,14 @@
 </div>
 
 <style>
+#indexSearch {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -41,24 +57,73 @@
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    transition: 0.2s;
 }
 
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.card img {
+.image-placeholder {
     width: 100%;
     height: 180px;
-    object-fit: cover;
+    background: #f2f2f2;
     border-radius: 8px;
 }
-
-.price {
-    font-weight: bold;
-    margin: 10px 0;
-}
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const searchInput = document.getElementById("indexSearch");
+    const container = document.getElementById("productContainer");
+
+    let timer;
+
+    searchInput.addEventListener("input", function() {
+
+        clearTimeout(timer);
+
+        const query = this.value.trim();
+
+        timer = setTimeout(() => {
+
+            fetch(`/search?q=${query}`)
+            .then(res => res.json())
+            .then(data => {
+
+                container.innerHTML = "";
+
+                if (data.length === 0) {
+                    container.innerHTML = "<p>No products found</p>";
+                    return;
+                }
+
+                data.forEach(p => {
+
+                    const card = document.createElement("div");
+                    card.className = "card";
+
+                    card.innerHTML = `
+                        ${p.image 
+                            ? `<img src="${p.image}" alt="${p.name}">`
+                            : `<div class="image-placeholder"></div>`}
+
+                        <h3>${p.name}</h3>
+                        <p class="price">₹${p.price}</p>
+
+                        <div id="cart-control-${p.id}">
+                            <button onclick="addToCart(${p.id})">
+                                Add to Cart
+                            </button>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+
+            });
+
+        }, 300);
+
+    });
+
+});
+</script>
 
 {% endblock %}
