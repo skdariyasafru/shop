@@ -4,7 +4,8 @@
 {% block content %}
 
 <!-- ===== PRODUCT GRID ===== -->
-<div class="grid" id="productContainer">
+<div class="grid">
+
     {% if products %}
         {% for product in products %}
         <div class="card">
@@ -13,9 +14,8 @@
             <h3>{{ product.name }}</h3>
             <p class="price">₹{{ product.price }}</p>
 
-            <!-- Cart Control Container -->
             <div id="cart-control-{{ product.id }}">
-                <button onclick="addToCart({{ product.id }}, this)">
+                <button onclick="addToCart({{ product.id }})">
                     Add to Cart
                 </button>
             </div>
@@ -23,14 +23,12 @@
         </div>
         {% endfor %}
     {% else %}
-        <p>No products found</p>
+        <p>No products available</p>
     {% endif %}
+
 </div>
 
-
-<!-- ===== STYLES ===== -->
 <style>
-
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -61,43 +59,6 @@
     font-weight: bold;
     margin: 10px 0;
 }
-
-button {
-    padding: 8px 15px;
-    border: none;
-    background: #007bff;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #0056b3;
-}
-
-/* Quantity Style */
-.qty-control {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-
-.qty-btn {
-    background: #007bff;
-    color: white;
-    border: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.qty-number {
-    font-weight: bold;
-    min-width: 20px;
-}
-
 </style>
 
 {% endblock %}
