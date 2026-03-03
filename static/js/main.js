@@ -1,9 +1,11 @@
 /* =====================================================
-   INDEX MART - AUTO RELOAD VERSION
+   INDEX MART - COMPLETE MAIN.JS (MERGED VERSION)
 ===================================================== */
 
 
-/* ================= MODAL FUNCTIONS ================= */
+/* =====================================================
+   AUTH / MODAL FUNCTIONS
+===================================================== */
 
 function openLogin() {
     const modal = document.getElementById("loginModal");
@@ -36,13 +38,17 @@ function switchToLogin() {
 }
 
 
-/* ================= AUTO OPEN LOGIN ================= */
+/* =====================================================
+   AUTO OPEN LOGIN (?login=1)
+===================================================== */
 
 document.addEventListener("DOMContentLoaded", function () {
+
     const params = new URLSearchParams(window.location.search);
     if (params.get("login") === "1") {
         openLogin();
     }
+
 });
 
 
@@ -57,14 +63,14 @@ function addToCart(productId) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: productId })
     })
-    .then(response => {
+    .then(res => {
 
-        if (response.status === 401 || response.status === 302) {
+        if (res.status === 401) {
             window.location.href = "/?login=1";
             return null;
         }
 
-        return response.json();
+        return res.json();
     })
     .then(data => {
 
@@ -87,7 +93,7 @@ function addToCart(productId) {
             </div>
         `;
     })
-    .catch(error => console.error("Add To Cart Error:", error));
+    .catch(err => console.error("Add To Cart Error:", err));
 }
 
 
@@ -105,113 +111,81 @@ function changeQty(productId, action) {
             action: action
         })
     })
-    .then(response => {
+    .then(res => {
 
-        if (response.status === 401 || response.status === 302) {
+        if (res.status === 401) {
             window.location.href = "/?login=1";
             return null;
         }
 
-        return response.json();
+        return res.json();
     })
     .then(data => {
 
         if (!data) return;
 
-        const currentPath = window.location.pathname;
+        const row = document.getElementById(`row-${productId}`);
+        const container = document.getElementById(`cart-control-${productId}`);
 
-        /* ===== IF ON CART PAGE → AUTO RELOAD ===== */
-        if (currentPath === "/cart") {
-
-            // small delay for smooth UX
-            setTimeout(() => {
-                location.reload();
-            }, 200);
-
-            return;
-        }
-
-        /* ===== INDEX PAGE LIVE UPDATE ===== */
-
+        /* ===== ITEM REMOVED ===== */
         if (data.removed) {
-            const container = document.getElementById(`cart-control-${productId}`);
-            if (container) {
+
+            // Cart page → remove row
+            if (row) row.remove();
+
+            // Index page → revert to Add button
+            if (container && !row) {
                 container.innerHTML = `
                     <button onclick="addToCart(${productId})">
                         Add to Cart
                     </button>
                 `;
             }
+
+            // Update total
+            const totalEl = document.getElementById("cart-total");
+            if (totalEl && data.total !== undefined) {
+                totalEl.innerText = data.total;
+            }
+
             return;
         }
 
+        /* ===== UPDATE QUANTITY ===== */
         const qtyEl = document.getElementById(`qty-${productId}`);
         if (qtyEl && data.quantity !== undefined) {
             qtyEl.innerText = data.quantity;
         }
 
+        /* ===== UPDATE SUBTOTAL ===== */
+        const subtotalEl = document.getElementById(`subtotal-${productId}`);
+        if (subtotalEl && data.subtotal !== undefined) {
+            subtotalEl.innerText = data.subtotal;
+        }
+
+        /* ===== UPDATE TOTAL ===== */
+        const totalEl = document.getElementById("cart-total");
+        if (totalEl && data.total !== undefined) {
+            totalEl.innerText = data.total;
+        }
+
     })
-    .catch(error => console.error("Quantity Update Error:", error));
+    .catch(err => console.error("Quantity Update Error:", err));
 }
 
 
 /* =====================================================
-   LIVE SEARCH
+   CLOSE MODAL OUTSIDE CLICK
 ===================================================== */
 
-document.addEventListener("DOMContentLoaded", function () {
+window.addEventListener("click", function (event) {
 
-    const searchInput = document.getElementById("searchInput");
-    const searchResults = document.getElementById("searchResults");
+    const loginModal = document.getElementById("loginModal");
+    const registerModal = document.getElementById("registerModal");
 
-    if (!searchInput || !searchResults) return;
-
-    let debounceTimer;
-
-    searchInput.addEventListener("input", function () {
-
-        clearTimeout(debounceTimer);
-        const query = this.value.trim();
-
-        if (query.length < 2) {
-            searchResults.innerHTML = "";
-            searchResults.style.display = "none";
-            return;
-        }
-
-        debounceTimer = setTimeout(() => {
-
-            fetch(`/search?q=${encodeURIComponent(query)}`)
-                .then(res => res.json())
-                .then(data => {
-
-                    searchResults.innerHTML = "";
-
-                    if (!data || data.length === 0) {
-                        searchResults.style.display = "none";
-                        return;
-                    }
-
-                    data.forEach(product => {
-
-                        const item = document.createElement("a");
-                        item.href = `/product/${product.id}`;
-                        item.className = "search-item";
-
-                        item.innerHTML = `
-                            <div>
-                                <strong>${product.name}</strong><br>
-                                ₹${product.price}
-                            </div>
-                        `;
-
-                        searchResults.appendChild(item);
-                    });
-
-                    searchResults.style.display = "block";
-                });
-
-        }, 300);
-    });
-
+    if (loginModal && event.target === loginModal) closeLogin();
+    if (registerModal && event.target === registerModal) closeRegister();
 });
+
+
+console.log("Index Mart Main JS Loaded Successfully");
