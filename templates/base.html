@@ -26,13 +26,10 @@
 
     <!-- SEARCH BAR -->
   <div class="search-container">
-    <input type="text"
-           id="searchInput"
-           placeholder="Search products..."
-           autocomplete="off">
-
+   <input type="text" id="indexSearch" placeholder="Search products...">
     <div id="searchResults" class="search-results"></div>
 </div>
+
 
     <div class="nav-links">
         {% if current_user.is_authenticated %}
@@ -119,6 +116,8 @@
 <!-- External JS -->
 
 
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 </html>

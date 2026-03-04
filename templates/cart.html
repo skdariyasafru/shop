@@ -1,58 +1,152 @@
 {% extends "base.html" %}
-{% block title %}Your Cart{% endblock %}
+{% block title %}Cart{% endblock %}
 
 {% block content %}
 
-<h2>Your Cart</h2>
+<h2 style="margin-bottom:20px;">🛒 Your Cart</h2>
 
 {% if items %}
 
-<div class="cart-container" id="cart-container">
+<table class="cart-table">
 
-    {% for item in items %}
-    <div class="cart-item" id="row-{{ item.product_id }}">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
 
-        <!-- Product Info -->
-        <div class="cart-info">
-            <h3>{{ item.name }}</h3>
-            <p>₹{{ item.price }}</p>
-        </div>
+    <tbody>
 
-        <!-- Quantity Controls -->
-        <div class="quantity-box">
-            <button onclick="updateCart({{ item.product_id }}, 'decrease')">−</button>
+        {% for item in items %}
+        <tr id="row-{{ item.product_id }}">
 
-            <span id="qty-{{ item.product_id }}">
-                {{ item.quantity }}
-            </span>
+            <td>{{ item.name }}</td>
 
-            <button onclick="updateCart({{ item.product_id }}, 'increase')">+</button>
-        </div>
+            <td>₹{{ item.price }}</td>
 
-        <!-- Subtotal -->
-        <div class="cart-subtotal">
-            ₹<span id="subtotal-{{ item.product_id }}">
-                {{ item.subtotal }}
-            </span>
-        </div>
+            <td>
+                <div id="cart-control-{{ item.product_id }}">
+                    <div class="qty-control">
 
-    </div>
-    {% endfor %}
+                        <button class="qty-btn"
+                            onclick="changeQty({{ item.product_id }}, 'decrease')">
+                            -
+                        </button>
 
+                        <span id="qty-{{ item.product_id }}" class="qty-number">
+                            {{ item.quantity }}
+                        </span>
+
+                        <button class="qty-btn"
+                            onclick="changeQty({{ item.product_id }}, 'increase')">
+                            +
+                        </button>
+
+                    </div>
+                </div>
+            </td>
+
+            <td>
+                ₹<span id="subtotal-{{ item.product_id }}">
+                    {{ item.subtotal }}
+                </span>
+            </td>
+
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+<!-- TOTAL SECTION -->
+<div class="cart-total-section">
+    <h3>
+        Total: ₹<span id="cart-total">{{ total }}</span>
+    </h3>
+
+    <a href="/checkout" class="checkout-btn">
+        Proceed to Checkout
+    </a>
 </div>
-
-<h3>
-Total: ₹<span id="cart-total">{{ total }}</span>
-</h3>
-
-<a href="/checkout" class="checkout-btn">
-    Proceed to Checkout
-</a>
 
 {% else %}
 
-<p id="empty-message">Your cart is empty.</p>
+<p>Your cart is empty.</p>
 
 {% endif %}
+
+<!-- ================= STYLES ================= -->
+
+<style>
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.cart-table th,
+.cart-table td {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+.cart-table th {
+    background: #f8f8f8;
+}
+
+.qty-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.qty-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.qty-btn:hover {
+    background: #0056b3;
+}
+
+.qty-number {
+    font-weight: bold;
+    min-width: 25px;
+}
+
+.cart-total-section {
+    margin-top: 25px;
+    text-align: right;
+}
+
+.checkout-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.checkout-btn:hover {
+    background: #218838;
+}
+
+</style>
 
 {% endblock %}

@@ -20,7 +20,7 @@ def create_app():
     # ================= DATABASE =================
     init_db(app)
 
-    # ================= LOGIN MANAGER =================
+    # ================= LOGIN =================
     login_manager.init_app(app)
     login_manager.login_view = "login"
     login_manager.login_message = None
@@ -31,7 +31,7 @@ def create_app():
 
     @login_manager.unauthorized_handler
     def unauthorized():
-        return redirect("/?login=1")
+        return jsonify({"error": "Unauthorized"}), 401
 
     # =================================================
     # HOME
@@ -54,14 +54,15 @@ def create_app():
     # =================================================
     @app.route("/search")
     def search():
-        query = request.args.get("q", "").strip()
 
-        if not query:
+        q = request.args.get("q", "").strip()
+
+        if not q:
             return jsonify([])
 
         products = Product.query.filter(
-            Product.name.ilike(f"%{query}%")
-        ).limit(10).all()
+            Product.name.ilike(f"%{q}%")
+        ).limit(20).all()
 
         return jsonify([
             {
@@ -144,7 +145,9 @@ def create_app():
     @app.route("/add_to_cart", methods=["POST"])
     @login_required
     def add_to_cart():
-        product_id = request.json.get("id")
+
+        data = request.get_json()
+        product_id = data.get("id")
 
         item = Cart.query.filter_by(
             user_id=current_user.id,
@@ -174,7 +177,8 @@ def create_app():
     @app.route("/update_cart", methods=["POST"])
     @login_required
     def update_cart():
-        data = request.json
+
+        data = request.get_json()
         product_id = data.get("id")
         action = data.get("action")
 
@@ -195,7 +199,10 @@ def create_app():
             else:
                 db.session.delete(item)
                 db.session.commit()
-                return jsonify({"removed": True})
+                return jsonify({
+                    "removed": True,
+                    "total": calculate_cart_total()
+                })
 
         db.session.commit()
 
@@ -214,7 +221,7 @@ def create_app():
         return jsonify({
             "quantity": item.quantity,
             "subtotal": subtotal,
-            "total": total
+            "total": calculate_cart_total()
         })
 
     # =================================================
@@ -223,6 +230,7 @@ def create_app():
     @app.route("/cart")
     @login_required
     def cart():
+
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
@@ -290,6 +298,7 @@ def create_app():
     @app.route("/my_orders")
     @login_required
     def my_orders():
+
         orders = Order.query.filter_by(
             username=current_user.username
         ).order_by(Order.created_at.desc()).all()
@@ -319,6 +328,19 @@ def create_app():
         )
 
     # =================================================
+    # HELPER
+    # =================================================
+    def calculate_cart_total():
+
+        items = db.session.query(Cart, Product).join(
+            Product, Cart.product_id == Product.id
+        ).filter(
+            Cart.user_id == current_user.id
+        ).all()
+
+        return sum(p.price * c.quantity for c, p in items)
+
+    # =================================================
     # PROFILE
     # =================================================
     @app.route("/profile")
@@ -329,6 +351,7 @@ def create_app():
     return app
 
 
+# ================= RENDER ENTRY =================
 app = create_app()
 
 if __name__ == "__main__":

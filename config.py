@@ -2,6 +2,10 @@ import os
 
 
 class Config:
+    # =====================================================
+    # SECRET KEY (Always available)
+    # =====================================================
+    SECRET_KEY = "super-secret-production-key-2026"
 
     # SECRET KEY
     SECRET_KEY = "super-secret-production-key-2026"
@@ -9,6 +13,7 @@ class Config:
     # DATABASE
     DATABASE_URL = os.environ.get("DATABASE_URL")
 
+    # 2️⃣ If not found → use local SQLite
     if not DATABASE_URL:
         BASE_DIR = os.path.abspath(os.path.dirname(__file__))
         DATABASE_URL = "sqlite:///" + os.path.join(BASE_DIR, "database.db")
