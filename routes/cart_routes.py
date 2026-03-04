@@ -1,10 +1,11 @@
 # ==========================================================
 # IMPORTS
 # ==========================================================
-from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
 from models.models import Cart, Product
 from db import db
+from flask import Blueprint, request, jsonify, render_template
+
 
 
 # ==========================================================
