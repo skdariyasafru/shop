@@ -2,11 +2,13 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
+
 <!-- ===== SEARCH BAR ===== -->
 <div class="search-box">
     <input type="text" id="indexSearch" placeholder="Search products...">
     <div id="searchSuggestions" class="search-suggestions"></div>
 </div>
+
 <!-- ===== PRODUCT GRID ===== -->
 <div class="grid" id="productContainer">
 
@@ -35,7 +37,12 @@
 <p>No products available</p>
 {% endif %}
 
+</div>
+
+
 <!-- ===== STYLES ===== -->
+<style>
+
 .search-box{
     position: relative;
     margin-bottom: 20px;
@@ -63,15 +70,10 @@
 .search-item:hover{
     background: #f5f5f5;
 }
-<style>
-
-
-<style>
 
 #indexSearch{
     width:100%;
     padding:12px;
-    margin-bottom:20px;
     border-radius:6px;
     border:1px solid #ccc;
 }
@@ -112,7 +114,7 @@
 </style>
 
 
-</style>
+<!-- ===== SEARCH SCRIPT ===== -->
 <script>
 
 document.addEventListener("DOMContentLoaded", function(){
@@ -146,16 +148,15 @@ document.addEventListener("DOMContentLoaded", function(){
 
                 products.forEach(p => {
 
-                    /* ===== PRODUCT GRID ===== */
-
                     const card = document.createElement("div");
                     card.className="card";
 
-                    card.innerHTML=`
-                        ${p.image
-                            ? `<img src="${p.image}" alt="${p.name}">`
-                            : `<div class="image-placeholder"></div>`}
+                    const imageHTML = p.image
+                        ? `<img src="${p.image}" alt="${p.name}">`
+                        : `<div class="image-placeholder"></div>`;
 
+                    card.innerHTML=`
+                        ${imageHTML}
                         <h3>${p.name}</h3>
                         <p class="price">₹${p.price}</p>
 
@@ -167,9 +168,6 @@ document.addEventListener("DOMContentLoaded", function(){
                     `;
 
                     container.appendChild(card);
-
-
-                    /* ===== SEARCH SUGGESTIONS ===== */
 
                     const item=document.createElement("div");
                     item.className="search-item";
@@ -193,8 +191,6 @@ document.addEventListener("DOMContentLoaded", function(){
     });
 
 
-    /* CLICK OUTSIDE CLOSE */
-
     document.addEventListener("click",function(e){
 
         if(!searchInput.contains(e.target) && !suggestions.contains(e.target)){
@@ -206,3 +202,5 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 </script>
+
+{% endblock %}
