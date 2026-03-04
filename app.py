@@ -45,26 +45,26 @@ def create_app():
     # LIVE SEARCH (Single Letter Supported)
     # =================================================
     @app.route("/search")
-    def search():
-        query = request.args.get("q", "").strip()
-
-        if not query:
-            products = Product.query.order_by(Product.id.desc()).all()
-        else:
-            products = Product.query.filter(
-                Product.name.ilike(f"%{query}%")
-            ).order_by(Product.id.desc()).all()
-
-        return jsonify([
-            {
-                "id": p.id,
-                "name": p.name,
-                "price": p.price,
-                "image": p.image
-            }
-            for p in products
-        ])
-
+	def search():
+	
+	    q = request.args.get("q", "").strip()
+	
+	    if not q:
+	        return jsonify([])
+	
+	    products = Product.query.filter(
+	        Product.name.ilike(f"%{q}%")
+	    ).limit(20).all()
+	
+	    return jsonify([
+	        {
+	            "id": p.id,
+	            "name": p.name,
+	            "price": p.price,
+	            "image": p.image
+	        }
+	        for p in products
+	    ])
     # =================================================
     # PRODUCT DETAIL
     # =================================================
