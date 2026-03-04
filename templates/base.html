@@ -26,14 +26,10 @@
 
     <!-- SEARCH BAR -->
   <div class="search-container">
-    <input type="text"
-           id="searchInput"
-           placeholder="Search products..."
-           autocomplete="off">
-
+   <input type="text" id="indexSearch" placeholder="Search products...">
     <div id="searchResults" class="search-results"></div>
 </div>
-<input type="text" id="indexSearch" placeholder="Search products...">
+
 
     <div class="nav-links">
         {% if current_user.is_authenticated %}
