@@ -55,6 +55,7 @@ def add_to_cart():
 def update_cart():
 
     data = request.get_json()
+
     product_id = data.get("id")
     action = data.get("action")
 
@@ -75,32 +76,26 @@ def update_cart():
         else:
             db.session.delete(item)
             db.session.commit()
-
-            return jsonify({
-                "removed": True
-            })
+            return jsonify({"removed": True})
 
     db.session.commit()
 
     product = Product.query.get(product_id)
+
     subtotal = product.price * item.quantity
 
     # calculate total cart price
-    items = db.session.query(Cart, Product).join(
+    cart_items = db.session.query(Cart, Product).join(
         Product, Cart.product_id == Product.id
-    ).filter(
-        Cart.user_id == current_user.id
-    ).all()
+    ).filter(Cart.user_id == current_user.id).all()
 
-    total = sum(p.price * c.quantity for c, p in items)
+    total = sum(p.price * c.quantity for c, p in cart_items)
 
     return jsonify({
         "quantity": item.quantity,
         "subtotal": subtotal,
         "total": total
     })
-
-
 # ==========================================================
 # DISPLAY CART PAGE
 # ==========================================================
