@@ -22,13 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     container.innerHTML = "";
 
                     if (!products || products.length === 0) {
-
-                        if (query.length === 0) {
-                            container.innerHTML = "<p>No products available</p>";
-                        } else {
-                            container.innerHTML = "<p>No products found</p>";
-                        }
-
+                        container.innerHTML = "<p>No products found</p>";
                         return;
                     }
 
@@ -37,7 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         const card = document.createElement("div");
                         card.className = "card";
 
-                        /* SAFE IMAGE HANDLING */
                         const imageHTML = p.image
                             ? `<img src="${p.image}" alt="${p.name}">`
                             : `<div class="image-placeholder"></div>`;
@@ -58,9 +51,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     });
 
-                })
-                .catch(err => {
-                    console.error("Search error:", err);
                 });
 
         }, 300);
