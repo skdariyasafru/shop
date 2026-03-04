@@ -1,6 +1,5 @@
-
 /* =====================================================
-   INDEX MART - COMPLETE MAIN.JS (MERGED VERSION)
+   INDEX MART - COMPLETE MAIN.JS
 ===================================================== */
 
 
@@ -46,6 +45,7 @@ function switchToLogin() {
 document.addEventListener("DOMContentLoaded", function () {
 
     const params = new URLSearchParams(window.location.search);
+
     if (params.get("login") === "1") {
         openLogin();
     }
@@ -128,13 +128,10 @@ function changeQty(productId, action) {
         const row = document.getElementById(`row-${productId}`);
         const container = document.getElementById(`cart-control-${productId}`);
 
-        /* ===== ITEM REMOVED ===== */
         if (data.removed) {
 
-            // Cart page → remove row
             if (row) row.remove();
 
-            // Index page → revert to Add button
             if (container && !row) {
                 container.innerHTML = `
                     <button onclick="addToCart(${productId})">
@@ -143,7 +140,6 @@ function changeQty(productId, action) {
                 `;
             }
 
-            // Update total
             const totalEl = document.getElementById("cart-total");
             if (totalEl && data.total !== undefined) {
                 totalEl.innerText = data.total;
@@ -152,19 +148,16 @@ function changeQty(productId, action) {
             return;
         }
 
-        /* ===== UPDATE QUANTITY ===== */
         const qtyEl = document.getElementById(`qty-${productId}`);
         if (qtyEl && data.quantity !== undefined) {
             qtyEl.innerText = data.quantity;
         }
 
-        /* ===== UPDATE SUBTOTAL ===== */
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
         if (subtotalEl && data.subtotal !== undefined) {
             subtotalEl.innerText = data.subtotal;
         }
 
-        /* ===== UPDATE TOTAL ===== */
         const totalEl = document.getElementById("cart-total");
         if (totalEl && data.total !== undefined) {
             totalEl.innerText = data.total;
@@ -173,6 +166,74 @@ function changeQty(productId, action) {
     })
     .catch(err => console.error("Quantity Update Error:", err));
 }
+
+
+/* =====================================================
+   LIVE SEARCH
+===================================================== */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("indexSearch");
+    const container = document.getElementById("productContainer");
+
+    if (!searchInput || !container) return;
+
+    let debounce;
+
+    searchInput.addEventListener("input", function () {
+
+        clearTimeout(debounce);
+
+        const query = this.value.trim();
+
+        debounce = setTimeout(() => {
+
+            fetch("/search?q=" + encodeURIComponent(query))
+            .then(res => res.json())
+            .then(products => {
+
+                container.innerHTML = "";
+
+                if (!products || products.length === 0) {
+                    container.innerHTML = "<p>No products found</p>";
+                    return;
+                }
+
+                products.forEach(p => {
+
+                    const card = document.createElement("div");
+                    card.className = "card";
+
+                    /* SAFE IMAGE HANDLING */
+                    const imageHTML = p.image
+                        ? `<img src="${p.image}" alt="${p.name}">`
+                        : `<div class="image-placeholder"></div>`;
+
+                    card.innerHTML = `
+                        ${imageHTML}
+                        <h3>${p.name}</h3>
+                        <p class="price">₹${p.price}</p>
+
+                        <div id="cart-control-${p.id}">
+                            <button onclick="addToCart(${p.id})">
+                                Add to Cart
+                            </button>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+
+                });
+
+            })
+            .catch(err => console.error("Search error:", err));
+
+        }, 300);
+
+    });
+
+});
 
 
 /* =====================================================
@@ -186,6 +247,7 @@ window.addEventListener("click", function (event) {
 
     if (loginModal && event.target === loginModal) closeLogin();
     if (registerModal && event.target === registerModal) closeRegister();
+
 });
 
 
