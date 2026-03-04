@@ -2,7 +2,11 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-
+<!-- ===== SEARCH BAR ===== -->
+<div class="search-box">
+    <input type="text" id="indexSearch" placeholder="Search products...">
+    <div id="searchSuggestions" class="search-suggestions"></div>
+</div>
 <!-- ===== PRODUCT GRID ===== -->
 <div class="grid" id="productContainer">
     {% if products %}
