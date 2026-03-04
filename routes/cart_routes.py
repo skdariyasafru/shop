@@ -4,6 +4,7 @@ from models.models import Cart, Product
 from db import db
 
 cart_bp = Blueprint("cart", __name__)
+cart_bp = Blueprint("cart", __name__, url_prefix="")
 
 
 @cart_bp.route("/add_to_cart", methods=["POST"])
@@ -56,7 +57,7 @@ def cart():
 
         cart_items.append({
             "product_id": product.id,
-            "name": product.name",
+            "name": product.name,
             "price": product.price,
             "quantity": cart_item.quantity,
             "subtotal": subtotal
