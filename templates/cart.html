@@ -28,24 +28,22 @@
             <td>₹{{ item.price }}</td>
 
             <td>
-                <div id="cart-control-{{ item.product_id }}">
-                    <div class="qty-control">
+                <div class="qty-control">
 
-                        <button class="qty-btn"
-                            onclick="changeQty({{ item.product_id }}, 'decrease')">
-                            -
-                        </button>
+                    <button class="qty-btn"
+                        onclick="changeQty({{ item.product_id }}, 'decrease')">
+                        -
+                    </button>
 
-                        <span id="qty-{{ item.product_id }}" class="qty-number">
-                            {{ item.quantity }}
-                        </span>
+                    <span id="qty-{{ item.product_id }}" class="qty-number">
+                        {{ item.quantity }}
+                    </span>
 
-                        <button class="qty-btn"
-                            onclick="changeQty({{ item.product_id }}, 'increase')">
-                            +
-                        </button>
+                    <button class="qty-btn"
+                        onclick="changeQty({{ item.product_id }}, 'increase')">
+                        +
+                    </button>
 
-                    </div>
                 </div>
             </td>
 
@@ -62,7 +60,7 @@
 
 </table>
 
-<!-- TOTAL SECTION -->
+<!-- TOTAL -->
 <div class="cart-total-section">
     <h3>
         Total: ₹<span id="cart-total">{{ total }}</span>
@@ -78,6 +76,43 @@
 <p>Your cart is empty.</p>
 
 {% endif %}
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+function changeQty(productId, action) {
+
+    fetch("/update_cart", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            id: productId,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if (data.removed) {
+            document.getElementById("row-" + productId).remove()
+            return
+        }
+
+        // update quantity
+        document.getElementById("qty-" + productId).innerText = data.quantity
+
+        // update subtotal
+        document.getElementById("subtotal-" + productId).innerText = data.subtotal
+
+        // update total
+        document.getElementById("cart-total").innerText = data.total
+    })
+}
+
+</script>
 
 <!-- ================= STYLES ================= -->
 
