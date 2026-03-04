@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from models.models import Cart, Product
 from db import db
 
-cart_bp = Blueprint("cart", __name__)
+
 cart_bp = Blueprint("cart", __name__, url_prefix="")
 
 
