@@ -296,6 +296,12 @@ def create_app():
 
         return sum(p.price * c.quantity for c, p in items)
 
+    @app.route("/profile")
+    @login_required
+    def profile():
+        return render_template("profile.html", user=current_user)
+
+
     return app
 
 
