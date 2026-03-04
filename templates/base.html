@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>{% block title %}Index Mart{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- External CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
@@ -26,19 +24,14 @@
     <div class="logo">🛒 Index Mart</div>
 
     <!-- SEARCH BAR -->
-  <div class="search-container">
-   <input type="text" id="indexSearch" placeholder="Search products...">
-    <div id="searchResults" class="search-results"></div>
-</div>
-
+    <div class="search-container">
+        <input type="text" id="indexSearch" placeholder="Search products...">
+        <div id="searchResults" class="search-results"></div>
+    </div>
 
     <div class="nav-links">
         {% if current_user.is_authenticated %}
-            <span></span>
-        <a href="/profile" style="color:white; text-decoration:none;">
-    {{ current_user.username }}
-</a>
-
+            <a href="/profile">{{ current_user.username }}</a>
             <a href="/cart">Cart</a>
             <a href="/my_orders">My Orders</a>
             <a href="/logout">Logout</a>
@@ -53,69 +46,51 @@
 <!-- LAYOUT -->
 <div class="layout">
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <h3>Categories</h3>
         <a href="/">All Products</a>
         <p style="color:gray;">Categories coming soon...</p>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="main">
         {% block content %}{% endblock %}
     </div>
 
 </div>
 
-<!-- FOOTER -->
 <div class="footer">
     © 2026 Index Mart
 </div>
 
 <!-- LOGIN MODAL -->
 <div id="loginModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeLogin()">&times;</span>
-        <h2>Login</h2>
+<div class="modal-content">
+<span class="close" onclick="closeLogin()">&times;</span>
+<h2>Login</h2>
 
-        <form method="POST" action="/login">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Sign In</button>
+<form method="POST" action="/login">
+<input type="text" name="username" placeholder="Username" required>
+<input type="password" name="password" placeholder="Password" required>
+<button type="submit">Sign In</button>
+</form>
 
-            <p style="margin-top:15px;">
-                New user?
-                <a href="#" onclick="switchToRegister()" style="color:#ff9900; font-weight:bold;">
-                    Register here
-                </a>
-            </p>
-        </form>
-    </div>
+</div>
 </div>
 
 <!-- REGISTER MODAL -->
 <div id="registerModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeRegister()">&times;</span>
-        <h2>Create Account</h2>
+<div class="modal-content">
+<span class="close" onclick="closeRegister()">&times;</span>
+<h2>Create Account</h2>
 
-        <form method="POST" action="/register">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Register</button>
+<form method="POST" action="/register">
+<input type="text" name="username" placeholder="Username" required>
+<input type="password" name="password" placeholder="Password" required>
+<button type="submit">Register</button>
+</form>
 
-            <p style="margin-top:15px;">
-                Already have account?
-                <a href="#" onclick="switchToLogin()" style="color:#ff9900; font-weight:bold;">
-                    Login
-                </a>
-            </p>
-        </form>
-    </div>
 </div>
-
-<!-- External JS -->
-
+</div>
 
 <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
