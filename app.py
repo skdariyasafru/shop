@@ -38,7 +38,15 @@ def create_app():
     # =================================================
     @app.route("/")
     def index():
-        products = Product.query.order_by(Product.id.desc()).all()
+        search = request.args.get("q", "").strip()
+
+        query = Product.query
+
+        if search:
+            query = query.filter(Product.name.ilike(f"%{search}%"))
+
+        products = query.order_by(Product.id.desc()).all()
+
         return render_template("index.html", products=products)
 
     # =================================================
@@ -164,7 +172,7 @@ def create_app():
         })
 
     # =================================================
-    # UPDATE CART
+    # UPDATE CART (+ / -)
     # =================================================
     @app.route("/update_cart", methods=["POST"])
     @login_required
@@ -200,6 +208,15 @@ def create_app():
 
         product = Product.query.get(product_id)
         subtotal = product.price * item.quantity
+
+        # calculate full cart total
+        items = db.session.query(Cart, Product).join(
+            Product, Cart.product_id == Product.id
+        ).filter(
+            Cart.user_id == current_user.id
+        ).all()
+
+        total = sum(p.price * c.quantity for c, p in items)
 
         return jsonify({
             "quantity": item.quantity,
@@ -255,7 +272,7 @@ def create_app():
         for item in cart_items:
             product = Product.query.get(item.product_id)
 
-            db.session.add(Order(
+            order = Order(
                 order_number=order_number,
                 username=current_user.username,
                 phone=current_user.phone,
@@ -265,7 +282,9 @@ def create_app():
                 quantity=item.quantity,
                 total=product.price * item.quantity,
                 status="Pending"
-            ))
+            )
+
+            db.session.add(order)
 
         Cart.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
@@ -334,5 +353,7 @@ def create_app():
 
 # ================= RENDER ENTRY =================
 app = create_app()
-port = int(os.environ.get("PORT", 10000))
-app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
