@@ -34,6 +34,9 @@
             <a href="{{ url_for('product.index') }}">Home</a>
             <a href="/profile">{{ current_user.username }}</a>
             <a href="/cart">Cart</a>
+            <a href="/cart">
+🛒 Cart <span id="cartCount">{{ current_user.cart|length if current_user.is_authenticated else 0 }}</span>
+</a>
             <a href="/my_orders">My Orders</a>
             <a href="/logout">Logout</a>
         {% else %}
