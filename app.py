@@ -42,29 +42,30 @@ def create_app():
         return render_template("index.html", products=products)
 
     # =================================================
-    # LIVE SEARCH (Single Letter Supported)
+    # LIVE SEARCH
     # =================================================
     @app.route("/search")
-	def search():
-	
-	    q = request.args.get("q", "").strip()
-	
-	    if not q:
-	        return jsonify([])
-	
-	    products = Product.query.filter(
-	        Product.name.ilike(f"%{q}%")
-	    ).limit(20).all()
-	
-	    return jsonify([
-	        {
-	            "id": p.id,
-	            "name": p.name,
-	            "price": p.price,
-	            "image": p.image
-	        }
-	        for p in products
-	    ])
+    def search():
+
+        q = request.args.get("q", "").strip()
+
+        if not q:
+            return jsonify([])
+
+        products = Product.query.filter(
+            Product.name.ilike(f"%{q}%")
+        ).limit(20).all()
+
+        return jsonify([
+            {
+                "id": p.id,
+                "name": p.name,
+                "price": p.price,
+                "image": p.image
+            }
+            for p in products
+        ])
+
     # =================================================
     # PRODUCT DETAIL
     # =================================================
@@ -163,7 +164,7 @@ def create_app():
         })
 
     # =================================================
-    # UPDATE CART (Dynamic)
+    # UPDATE CART
     # =================================================
     @app.route("/update_cart", methods=["POST"])
     @login_required
@@ -278,15 +279,14 @@ def create_app():
     @app.route("/my_orders")
     @login_required
     def my_orders():
+
         orders = Order.query.filter_by(
             username=current_user.username
         ).order_by(Order.created_at.desc()).all()
 
         return render_template("orders.html", orders=orders)
 
-
-
-	# =================================================
+    # =================================================
     # ORDER DETAILS
     # =================================================
     @app.route("/order/<order_number>")
@@ -308,11 +308,11 @@ def create_app():
             order_number=order_number
         )
 
-
     # =================================================
     # HELPER
     # =================================================
     def calculate_cart_total():
+
         items = db.session.query(Cart, Product).join(
             Product, Cart.product_id == Product.id
         ).filter(
@@ -321,14 +321,16 @@ def create_app():
 
         return sum(p.price * c.quantity for c, p in items)
 
+    # =================================================
+    # PROFILE
+    # =================================================
     @app.route("/profile")
     @login_required
     def profile():
         return render_template("profile.html", user=current_user)
 
-
     return app
 
 
-# 🔥 IMPORTANT FOR RENDER
+# ================= RENDER ENTRY =================
 app = create_app()
