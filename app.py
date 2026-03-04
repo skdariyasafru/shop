@@ -284,6 +284,31 @@ def create_app():
 
         return render_template("orders.html", orders=orders)
 
+
+
+	# =================================================
+    # ORDER DETAILS
+    # =================================================
+    @app.route("/order/<order_number>")
+    @login_required
+    def order_details(order_number):
+
+        orders = Order.query.filter_by(
+            order_number=order_number,
+            username=current_user.username
+        ).all()
+
+        if not orders:
+            flash("Order not found")
+            return redirect("/my_orders")
+
+        return render_template(
+            "order_details.html",
+            orders=orders,
+            order_number=order_number
+        )
+
+
     # =================================================
     # HELPER
     # =================================================
