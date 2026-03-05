@@ -44,7 +44,24 @@ def checkout():
     flash("Order placed successfully!")
 
     return redirect("/my_orders")
-
+    @order_bp.route("/order/<order_number>")
+    @login_required
+    def order_details(order_number):
+    
+        orders = Order.query.filter_by(
+            order_number=order_number,
+            username=current_user.username
+        ).all()
+    
+        if not orders:
+            flash("Order not found")
+            return redirect("/my_orders")
+    
+        return render_template(
+            "order_details.html",
+            orders=orders,
+            order_number=order_number
+        )
 
 @order_bp.route("/my_orders")
 @login_required
