@@ -1,11 +1,21 @@
 from datetime import datetime
 from flask import Blueprint, redirect, flash, render_template
 from flask_login import login_required, current_user
+
 from models.models import Cart, Product, Order
 from db import db
 
+
+# ======================================================
+# Blueprint
+# ======================================================
+
 order_bp = Blueprint("order", __name__)
 
+
+# ======================================================
+# Checkout Route
+# ======================================================
 
 @order_bp.route("/checkout")
 @login_required
@@ -17,6 +27,7 @@ def checkout():
         flash("Cart is empty")
         return redirect("/")
 
+    # Generate Order Number
     order_number = "ORD-" + datetime.now().strftime("%Y%m%d%H%M%S")
 
     for item in cart_items:
@@ -37,6 +48,7 @@ def checkout():
 
         db.session.add(order)
 
+    # Clear cart
     Cart.query.filter_by(user_id=current_user.id).delete()
 
     db.session.commit()
@@ -44,24 +56,35 @@ def checkout():
     flash("Order placed successfully!")
 
     return redirect("/my_orders")
-    @order_bp.route("/order/<order_number>")
-    @login_required
-    def order_details(order_number):
-    
-        orders = Order.query.filter_by(
-            order_number=order_number,
-            username=current_user.username
-        ).all()
-    
-        if not orders:
-            flash("Order not found")
-            return redirect("/my_orders")
-    
-        return render_template(
-            "order_details.html",
-            orders=orders,
-            order_number=order_number
-        )
+
+
+# ======================================================
+# Order Details Page
+# ======================================================
+
+@order_bp.route("/order/<order_number>")
+@login_required
+def order_details(order_number):
+
+    orders = Order.query.filter_by(
+        order_number=order_number,
+        username=current_user.username
+    ).all()
+
+    if not orders:
+        flash("Order not found")
+        return redirect("/my_orders")
+
+    return render_template(
+        "order_details.html",
+        orders=orders,
+        order_number=order_number
+    )
+
+
+# ======================================================
+# My Orders Page
+# ======================================================
 
 @order_bp.route("/my_orders")
 @login_required
