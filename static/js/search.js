@@ -6,14 +6,23 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!searchInput || !container) return;
 
     let debounce;
+    let lastQuery = "";
 
     searchInput.addEventListener("input", function () {
 
-        clearTimeout(debounce);
-
         const query = this.value.trim();
 
+        // avoid duplicate calls
+        if (query === lastQuery) return;
+
+        lastQuery = query;
+
+        clearTimeout(debounce);
+
         debounce = setTimeout(() => {
+
+            // loading message
+            container.innerHTML = "<p>Searching...</p>";
 
             fetch("/search?q=" + encodeURIComponent(query))
                 .then(res => res.json())
@@ -22,7 +31,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     container.innerHTML = "";
 
                     if (!products || products.length === 0) {
-                        container.innerHTML = "<p>No products found</p>";
+
+                        if (query === "") {
+                            container.innerHTML = "<p>No products available</p>";
+                        } else {
+                            container.innerHTML = "<p>No products found</p>";
+                        }
+
                         return;
                     }
 
@@ -37,7 +52,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                         card.innerHTML = `
                             ${imageHTML}
+
                             <h3>${p.name}</h3>
+
                             <p class="price">₹${p.price}</p>
 
                             <div id="cart-control-${p.id}">
@@ -51,9 +68,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     });
 
+                })
+                .catch(error => {
+
+                    console.error("Search error:", error);
+
+                    container.innerHTML = "<p>Search failed. Try again.</p>";
+
                 });
 
-        }, 300);
+        }, 300); // debounce time
 
     });
 
