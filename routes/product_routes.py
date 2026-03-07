@@ -1,4 +1,5 @@
 from flask import Blueprint, request, render_template, jsonify
+from sqlalchemy import or_
 from models.models import Product
 
 product_bp = Blueprint("product", __name__)
@@ -15,37 +16,50 @@ def index():
     query = Product.query
 
     if search:
-        query = query.filter(Product.name.ilike(f"%{search}%"))
+        query = query.filter(
+            or_(
+                Product.name.ilike(f"%{search}%"),
+                Product.description.ilike(f"%{search}%"),
+                Product.category.ilike(f"%{search}%")
+            )
+        )
 
-    products = query.order_by(Product.id.desc()).all()
+    products = query.order_by(Product.id.desc()).limit(50).all()
 
     return render_template("index.html", products=products)
 
 
 # =========================
-# AJAX SEARCH API
+# FAST AJAX SEARCH API
 # =========================
 @product_bp.route("/search")
 def search():
 
     q = request.args.get("q", "").strip()
 
+    query = Product.query
+
     if q:
-        products = Product.query.filter(
-            Product.name.ilike(f"%{q}%")
-        ).all()
-    else:
-        products = Product.query.order_by(Product.id.desc()).all()
+        query = query.filter(
+            or_(
+                Product.name.ilike(f"%{q}%"),
+                Product.description.ilike(f"%{q}%"),
+                Product.category.ilike(f"%{q}%")
+            )
+        )
 
-    data = []
+    # limit results for speed
+    products = query.order_by(Product.id.desc()).limit(20).all()
 
-    for p in products:
-        data.append({
+    data = [
+        {
             "id": p.id,
             "name": p.name,
             "price": p.price,
             "image": p.image
-        })
+        }
+        for p in products
+    ]
 
     return jsonify(data)
 
