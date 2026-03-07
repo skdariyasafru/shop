@@ -1,4 +1,3 @@
-plase update my search 
 from flask import Blueprint, request, render_template, jsonify
 from models.models import Product
 
@@ -62,4 +61,4 @@ def product_detail(id):
     return render_template(
         "product_detail.html",
         product=product
-    )    amazon style and 10x faster 
+    )     
