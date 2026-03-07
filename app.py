@@ -21,7 +21,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    init_db(app)
+    # initialize database safely
+    with app.app_context():
+        init_db(app)
 
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
@@ -42,6 +44,7 @@ def create_app():
 
 
 app = create_app()
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
