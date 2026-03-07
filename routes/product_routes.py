@@ -17,19 +17,19 @@ def index():
 
     return render_template("index.html", products=products)
 
-
-@product_bp.route("/search")
+@app.route("/search")
 def search():
+
     q = request.args.get("q", "").strip()
 
-    if not q:
-        return jsonify([])
+    if q == "":
+        products = Product.query.all()
+    else:
+        products = Product.query.filter(
+            Product.name.ilike(f"%{q}%")
+        ).all()
 
-    products = Product.query.filter(
-        Product.name.ilike(f"%{q}%")
-    ).limit(20).all()
-
-    return jsonify([
+    data = [
         {
             "id": p.id,
             "name": p.name,
@@ -37,7 +37,9 @@ def search():
             "image": p.image
         }
         for p in products
-    ])
+    ]
+
+    return jsonify(data)
 
 
 @product_bp.route("/product/<int:id>")
