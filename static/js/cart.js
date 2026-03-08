@@ -4,48 +4,44 @@
 /* ---------- ADD TO CART ---------- */
 export function addToCart(productId) {
 
+    const container = document.getElementById(`cart-control-${productId}`);
+    if (!container) return;
+
+    /* show UI instantly */
+    container.innerHTML = `
+        <div class="qty-control">
+            <button class="qty-btn"
+                onclick="changeQty(${productId}, 'decrease')">-</button>
+
+            <span id="qty-${productId}" class="qty-number">1</span>
+
+            <button class="qty-btn"
+                onclick="changeQty(${productId}, 'increase')">+</button>
+        </div>
+    `;
+
     fetch("/add_to_cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: productId })
     })
     .then(res => {
-
         if (res.status === 401) {
             window.location.href = "/?login=1";
             return null;
         }
-
         return res.json();
     })
     .then(data => {
 
-        if (!data || data.status !== "added") return;
+        if (!data) return;
 
-        const qty = data.quantity ?? 1;
+        const qtyEl = document.getElementById(`qty-${productId}`);
 
-        const container = document.getElementById(`cart-control-${productId}`);
-        if (!container) return;
+        if (qtyEl && data.quantity !== undefined) {
+            qtyEl.innerText = data.quantity;
+        }
 
-        container.innerHTML = `
-            <div class="qty-control">
-
-                <button class="qty-btn"
-                    onclick="changeQty(${productId}, 'decrease')">
-                    -
-                </button>
-
-                <span id="qty-${productId}" class="qty-number">
-                    ${qty}
-                </span>
-
-                <button class="qty-btn"
-                    onclick="changeQty(${productId}, 'increase')">
-                    +
-                </button>
-
-            </div>
-        `;
     })
     .catch(err => console.error("Add To Cart Error:", err));
 }
@@ -64,12 +60,10 @@ export function changeQty(productId, action) {
         })
     })
     .then(res => {
-
         if (res.status === 401) {
             window.location.href = "/?login=1";
             return null;
         }
-
         return res.json();
     })
     .then(data => {
@@ -104,7 +98,6 @@ export function changeQty(productId, action) {
 
         /* ---------- UPDATE QUANTITY ---------- */
         const qtyEl = document.getElementById(`qty-${productId}`);
-
         if (qtyEl && data.quantity !== undefined) {
             qtyEl.innerText = data.quantity;
         }
@@ -112,7 +105,6 @@ export function changeQty(productId, action) {
 
         /* ---------- UPDATE SUBTOTAL ---------- */
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
-
         if (subtotalEl && data.subtotal !== undefined) {
             subtotalEl.innerText = data.subtotal;
         }
@@ -120,7 +112,6 @@ export function changeQty(productId, action) {
 
         /* ---------- UPDATE TOTAL ---------- */
         const totalEl = document.getElementById("cart-total");
-
         if (totalEl && data.total !== undefined) {
             totalEl.innerText = data.total;
         }
