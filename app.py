@@ -27,7 +27,7 @@ def self_ping():
             pass
 
         # wait 5 minutes
-        time.sleep(300)
+        time.sleep(240)
 
 
 # ================= CREATE APP =================
