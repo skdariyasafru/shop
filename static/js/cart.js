@@ -1,24 +1,6 @@
 /* ================= CART FUNCTIONS ================= */
 
-
-/* ---------- ADD TO CART ---------- */
 export function addToCart(productId) {
-
-    const container = document.getElementById(`cart-control-${productId}`);
-    if (!container) return;
-
-    /* show UI instantly */
-    container.innerHTML = `
-        <div class="qty-control">
-            <button class="qty-btn"
-                onclick="changeQty(${productId}, 'decrease')">-</button>
-
-            <span id="qty-${productId}" class="qty-number">1</span>
-
-            <button class="qty-btn"
-                onclick="changeQty(${productId}, 'increase')">+</button>
-        </div>
-    `;
 
     fetch("/add_to_cart", {
         method: "POST",
@@ -33,22 +15,29 @@ export function addToCart(productId) {
         return res.json();
     })
     .then(data => {
+        if (!data || data.status !== "added") return;
 
-        if (!data) return;
+        const container = document.getElementById(`cart-control-${productId}`);
+        if (!container) return;
 
-        const qtyEl = document.getElementById(`qty-${productId}`);
+        container.innerHTML = `
+            <div class="qty-control">
+                <button class="qty-btn"
+                    onclick="changeQty(${productId}, 'decrease')">-</button>
 
-        if (qtyEl && data.quantity !== undefined) {
-            qtyEl.innerText = data.quantity;
-        }
+                <span id="qty-${productId}" class="qty-number">
+                    ${data.quantity}
+                </span>
 
+                <button class="qty-btn"
+                    onclick="changeQty(${productId}, 'increase')">+</button>
+            </div>
+        `;
     })
     .catch(err => console.error("Add To Cart Error:", err));
 }
 
 
-
-/* ---------- CHANGE QUANTITY ---------- */
 export function changeQty(productId, action) {
 
     fetch("/update_cart", {
@@ -73,8 +62,6 @@ export function changeQty(productId, action) {
         const row = document.getElementById(`row-${productId}`);
         const container = document.getElementById(`cart-control-${productId}`);
 
-
-        /* ---------- ITEM REMOVED ---------- */
         if (data.removed) {
 
             if (row) row.remove();
@@ -95,22 +82,16 @@ export function changeQty(productId, action) {
             return;
         }
 
-
-        /* ---------- UPDATE QUANTITY ---------- */
         const qtyEl = document.getElementById(`qty-${productId}`);
         if (qtyEl && data.quantity !== undefined) {
             qtyEl.innerText = data.quantity;
         }
 
-
-        /* ---------- UPDATE SUBTOTAL ---------- */
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
         if (subtotalEl && data.subtotal !== undefined) {
             subtotalEl.innerText = data.subtotal;
         }
 
-
-        /* ---------- UPDATE TOTAL ---------- */
         const totalEl = document.getElementById("cart-total");
         if (totalEl && data.total !== undefined) {
             totalEl.innerText = data.total;
