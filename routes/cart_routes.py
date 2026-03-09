@@ -1,24 +1,23 @@
-from flask import Blueprint, jsonify, request, render_template
 from flask_login import login_required, current_user
-from db import db
 from models.models import Cart, Product
+from db import db
+from flask import Blueprint, request, jsonify, render_template
+
 
 cart_bp = Blueprint("cart", __name__)
 
 
 # ================= ADD TO CART =================
-
 @cart_bp.route("/add_to_cart", methods=["POST"])
+@login_required
 def add_to_cart():
 
-    if not current_user.is_authenticated:
-        return jsonify({"status": "login_required"}), 401
-
-    pid = request.json.get("id")
+    data = request.get_json()
+    product_id = data.get("id")
 
     item = Cart.query.filter_by(
         user_id=current_user.id,
-        product_id=pid
+        product_id=product_id
     ).first()
 
     if item:
@@ -26,105 +25,120 @@ def add_to_cart():
     else:
         item = Cart(
             user_id=current_user.id,
-            product_id=pid,
+            product_id=product_id,
             quantity=1
         )
         db.session.add(item)
 
     db.session.commit()
 
+    cart_count = Cart.query.filter_by(user_id=current_user.id).count()
+
     return jsonify({
         "status": "added",
-        "quantity": item.quantity
+        "quantity": item.quantity,
+        "cart_count": cart_count
     })
 
 
 # ================= UPDATE CART =================
-
 @cart_bp.route("/update_cart", methods=["POST"])
+@login_required
 def update_cart():
 
-    if not current_user.is_authenticated:
-        return jsonify({"status": "login_required"}), 401
+    data = request.get_json()
 
-    pid = request.json.get("id")
-    action = request.json.get("action")
+    product_id = data.get("id")
+    action = data.get("action")
 
     item = Cart.query.filter_by(
         user_id=current_user.id,
-        product_id=pid
+        product_id=product_id
     ).first()
 
     if not item:
         return jsonify({"error": "Item not found"}), 404
 
-    product = Product.query.get(pid)
+    product = Product.query.get(product_id)
 
-    # Increase quantity
     if action == "increase":
         item.quantity += 1
 
-    # Decrease quantity
     elif action == "decrease":
-        item.quantity -= 1
+        if item.quantity > 1:
+            item.quantity -= 1
+        else:
+            db.session.delete(item)
+            db.session.commit()
 
-    # Remove item if quantity becomes 0
-    if item.quantity <= 0:
-        db.session.delete(item)
-        db.session.commit()
+            cart_count = Cart.query.filter_by(user_id=current_user.id).count()
 
-        # calculate total
-        items = Cart.query.filter_by(user_id=current_user.id).all()
-        total = sum(Product.query.get(i.product_id).price * i.quantity for i in items)
+            total = db.session.query(
+                db.func.sum(Product.price * Cart.quantity)
+            ).join(Product).filter(
+                Cart.user_id == current_user.id
+            ).scalar() or 0
 
-        return jsonify({
-            "removed": True,
-            "total": total
-        })
+            return jsonify({
+                "removed": True,
+                "total": total,
+                "cart_count": cart_count
+            })
 
     db.session.commit()
 
     subtotal = product.price * item.quantity
 
-    # calculate total
-    items = Cart.query.filter_by(user_id=current_user.id).all()
-    total = sum(Product.query.get(i.product_id).price * i.quantity for i in items)
+    total = db.session.query(
+        db.func.sum(Product.price * Cart.quantity)
+    ).join(Product).filter(
+        Cart.user_id == current_user.id
+    ).scalar() or 0
+
+    cart_count = Cart.query.filter_by(user_id=current_user.id).count()
 
     return jsonify({
         "quantity": item.quantity,
         "subtotal": subtotal,
-        "total": total
+        "total": total,
+        "cart_count": cart_count
     })
 
 
 # ================= CART PAGE =================
-
 @cart_bp.route("/cart")
 @login_required
 def cart():
 
-    cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+    items = db.session.query(
+        Cart.quantity,
+        Product.id,
+        Product.name,
+        Product.price
+    ).join(
+        Product, Cart.product_id == Product.id
+    ).filter(
+        Cart.user_id == current_user.id
+    ).all()
 
-    items = []
+    cart_items = []
     total = 0
 
-    for i in cart_items:
+    for quantity, pid, name, price in items:
 
-        product = Product.query.get(i.product_id)
-
-        subtotal = product.price * i.quantity
+        subtotal = price * quantity
         total += subtotal
 
-        items.append({
-            "id": product.id,
-            "name": product.name,
-            "price": product.price,
-            "quantity": i.quantity,
+        cart_items.append({
+            "product_id": pid,
+            "name": name,
+            "price": price,
+            "quantity": quantity,
             "subtotal": subtotal
         })
 
     return render_template(
         "cart.html",
-        items=items,
+        items=cart_items,
         total=total
     )
