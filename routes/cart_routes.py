@@ -35,11 +35,8 @@ def add_to_cart():
 
     db.session.commit()
 
-    cart_count = db.session.query(
-        db.func.sum(Cart.quantity)
-    ).filter(
-        Cart.user_id == current_user.id
-    ).scalar() or 0
+    cart_items = Cart.query.filter_by(user_id=current_user.id).all()
+    cart_count = sum(i.quantity for i in cart_items)
 
     return jsonify({
         "status": "added",
@@ -54,7 +51,6 @@ def add_to_cart():
 def update_cart():
 
     data = request.get_json()
-
     product_id = data.get("id")
     action = data.get("action")
 
@@ -82,19 +78,15 @@ def update_cart():
             db.session.delete(item)
             db.session.commit()
 
-            cart_count = db.session.query(
-                db.func.sum(Cart.quantity)
-            ).filter(
-                Cart.user_id == current_user.id
-            ).scalar() or 0
+            cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
-            total = db.session.query(
-                db.func.sum(Product.price * Cart.quantity)
-            ).join(
-                Product, Cart.product_id == Product.id
-            ).filter(
-                Cart.user_id == current_user.id
-            ).scalar() or 0
+            total = 0
+            cart_count = 0
+
+            for c in cart_items:
+                p = Product.query.get(c.product_id)
+                total += p.price * c.quantity
+                cart_count += c.quantity
 
             return jsonify({
                 "removed": True,
@@ -106,19 +98,15 @@ def update_cart():
 
     subtotal = product.price * item.quantity
 
-    total = db.session.query(
-        db.func.sum(Product.price * Cart.quantity)
-    ).join(
-        Product, Cart.product_id == Product.id
-    ).filter(
-        Cart.user_id == current_user.id
-    ).scalar() or 0
+    cart_items = Cart.query.filter_by(user_id=current_user.id).all()
 
-    cart_count = db.session.query(
-        db.func.sum(Cart.quantity)
-    ).filter(
-        Cart.user_id == current_user.id
-    ).scalar() or 0
+    total = 0
+    cart_count = 0
+
+    for c in cart_items:
+        p = Product.query.get(c.product_id)
+        total += p.price * c.quantity
+        cart_count += c.quantity
 
     return jsonify({
         "quantity": item.quantity,
@@ -133,30 +121,23 @@ def update_cart():
 @login_required
 def cart():
 
-    items = db.session.query(
-        Cart.quantity,
-        Product.id,
-        Product.name,
-        Product.price
-    ).join(
-        Product, Cart.product_id == Product.id
-    ).filter(
-        Cart.user_id == current_user.id
-    ).all()
+    cart_rows = Cart.query.filter_by(user_id=current_user.id).all()
 
     cart_items = []
     total = 0
 
-    for quantity, pid, name, price in items:
+    for row in cart_rows:
 
-        subtotal = price * quantity
+        product = Product.query.get(row.product_id)
+
+        subtotal = product.price * row.quantity
         total += subtotal
 
         cart_items.append({
-            "product_id": pid,
-            "name": name,
-            "price": price,
-            "quantity": quantity,
+            "product_id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "quantity": row.quantity,
             "subtotal": subtotal
         })
 
