@@ -6,28 +6,67 @@
 <div class="grid" id="productContainer">
 
 {% if products %}
-    {% for product in products %}
-    <div class="card">
+{% for product in products %}
 
-        {% if product.image %}
-            <img src="{{ product.image }}" alt="{{ product.name }}">
-        {% else %}
-            <div class="image-placeholder"></div>
-        {% endif %}
+<div class="card">
 
-        <h3>{{ product.name }}</h3>
-        <p class="price">₹{{ product.price }}</p>
-
-        <div id="cart-control-{{ product.id }}">
-            <button onclick="addToCart({{ product.id }})">
-                Add to Cart
-            </button>
-        </div>
-
-    </div>
-    {% endfor %}
+{% if product.image %}
+<img src="{{ product.image }}" alt="{{ product.name }}">
 {% else %}
+<div class="image-placeholder"></div>
+{% endif %}
+
+<h3>{{ product.name }}</h3>
+
+<p class="price">₹{{ product.price }}</p>
+
+<div id="cart-control-{{ product.id }}">
+
+{% set qty = 0 %}
+
+{% if current_user.is_authenticated %}
+
+{% for item in current_user.cart %}
+{% if item.product_id == product.id %}
+{% set qty = item.quantity %}
+{% endif %}
+{% endfor %}
+
+{% endif %}
+
+{% if qty > 0 %}
+
+<div class="qty-control">
+
+<button class="qty-btn"
+onclick="changeQty({{ product.id }}, 'decrease')">-</button>
+
+<span id="qty-{{ product.id }}" class="qty-number">
+{{ qty }}
+</span>
+
+<button class="qty-btn"
+onclick="changeQty({{ product.id }}, 'increase')">+</button>
+
+</div>
+
+{% else %}
+
+<button onclick="addToCart({{ product.id }})">
+Add to Cart
+</button>
+
+{% endif %}
+
+</div>
+
+</div>
+
+{% endfor %}
+{% else %}
+
 <p>No products available</p>
+
 {% endif %}
 
 </div>
