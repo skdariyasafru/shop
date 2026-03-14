@@ -9,13 +9,18 @@
     {% for product in products %}
     <div class="card">
 
+        <a href="/product/{{ product.id }}">
+
         {% if product.image %}
             <img src="{{ product.image }}" alt="{{ product.name }}">
         {% else %}
             <div class="image-placeholder"></div>
         {% endif %}
 
+        </a>
+
         <h3>{{ product.name }}</h3>
+
         <p class="price">₹{{ product.price }}</p>
 
         <div id="cart-control-{{ product.id }}">
@@ -27,7 +32,9 @@
     </div>
     {% endfor %}
 {% else %}
+
 <p>No products available</p>
+
 {% endif %}
 
 </div>
