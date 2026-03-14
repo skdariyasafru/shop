@@ -16,33 +16,45 @@ window.addToCart = function(productId) {
     })
     .then(data => {
 
-        if (!data || data.status !== "added") return;
+        if (!data) return;
 
         const container = document.getElementById(`cart-control-${productId}`);
         if (!container) return;
 
         const qty = data.quantity || 1;
 
-        container.innerHTML = `
-            <div class="qty-control">
-                <button class="qty-btn"
-                    onclick="changeQty(${productId}, 'decrease')">-</button>
+        /* Check if quantity element already exists */
+        const qtyEl = document.getElementById(`qty-${productId}`);
 
-                <span id="qty-${productId}" class="qty-number">
-                    ${qty}
-                </span>
+        if (qtyEl) {
+            /* Just update number */
+            qtyEl.innerText = qty;
+        } 
+        else {
+            /* Replace Add to Cart button with qty controls */
+            container.innerHTML = `
+                <div class="qty-control">
+                    <button class="qty-btn"
+                        onclick="changeQty(${productId}, 'decrease')">-</button>
 
-                <button class="qty-btn"
-                    onclick="changeQty(${productId}, 'increase')">+</button>
-            </div>
-        `;
+                    <span id="qty-${productId}" class="qty-number">
+                        ${qty}
+                    </span>
+
+                    <button class="qty-btn"
+                        onclick="changeQty(${productId}, 'increase')">+</button>
+                </div>
+            `;
+        }
 
         updateCartCount(data.cart_count);
 
     })
     .catch(err => console.error("Add To Cart Error:", err));
-}
+};
 
+
+/* ================= CHANGE QUANTITY ================= */
 
 window.changeQty = function(productId, action) {
 
@@ -68,6 +80,7 @@ window.changeQty = function(productId, action) {
         const row = document.getElementById(`row-${productId}`);
         const container = document.getElementById(`cart-control-${productId}`);
 
+        /* Product removed */
         if (data.removed) {
 
             if (row) row.remove();
@@ -90,20 +103,29 @@ window.changeQty = function(productId, action) {
             return;
         }
 
+        /* Update quantity */
         const qtyEl = document.getElementById(`qty-${productId}`);
-        if (qtyEl) qtyEl.innerText = data.quantity;
+        if (qtyEl) {
+            qtyEl.innerText = data.quantity;
+        }
 
+        /* Update subtotal on cart page */
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
-        if (subtotalEl) subtotalEl.innerText = data.subtotal;
+        if (subtotalEl) {
+            subtotalEl.innerText = data.subtotal;
+        }
 
+        /* Update cart total */
         const totalEl = document.getElementById("cart-total");
-        if (totalEl) totalEl.innerText = data.total;
+        if (totalEl) {
+            totalEl.innerText = data.total;
+        }
 
         updateCartCount(data.cart_count);
 
     })
     .catch(err => console.error("Quantity Update Error:", err));
-}
+};
 
 
 /* ================= CART COUNT ================= */
