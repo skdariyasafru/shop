@@ -9,7 +9,7 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Indexed for faster login search
+    # Indexed for fast login
     username = db.Column(db.String(100), unique=True, index=True)
 
     password = db.Column(db.String(200))
@@ -22,9 +22,12 @@ class User(UserMixin, db.Model):
 
     points = db.Column(db.Integer, default=0)
 
-    # Relationship (faster access to user cart)
-    carts = db.relationship("Cart", backref="user", lazy=True)
-
+    # optimized relationship loading
+    carts = db.relationship(
+        "Cart",
+        backref="user",
+        lazy="select"
+    )
 
 
 # ================= PRODUCT =================
@@ -33,15 +36,17 @@ class Product(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # INDEX ADDED → makes search very fast
+    # index improves search speed
     name = db.Column(db.String(200), index=True)
 
     price = db.Column(db.Float)
     image = db.Column(db.String(300))
 
-    # Relationship (optional but good practice)
-    carts = db.relationship("Cart", backref="product", lazy=True)
-
+    carts = db.relationship(
+        "Cart",
+        backref="product",
+        lazy="select"
+    )
 
 
 # ================= CART =================
@@ -50,12 +55,24 @@ class Cart(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Foreign Keys (important for performance + integrity)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
-    product_id = db.Column(db.Integer, db.ForeignKey("product.id"), index=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        index=True
+    )
+
+    product_id = db.Column(
+        db.Integer,
+        db.ForeignKey("product.id"),
+        index=True
+    )
 
     quantity = db.Column(db.Integer, default=1)
 
+    # composite index → VERY important for cart speed
+    __table_args__ = (
+        db.Index("idx_user_product", "user_id", "product_id"),
+    )
 
 
 # ================= ORDER =================
@@ -64,7 +81,11 @@ class Order(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    order_number = db.Column(db.String(20), unique=True, index=True)
+    order_number = db.Column(
+        db.String(20),
+        unique=True,
+        index=True
+    )
 
     username = db.Column(db.String(100), index=True)
 
@@ -72,13 +93,28 @@ class Order(db.Model):
     address = db.Column(db.Text)
 
     product_name = db.Column(db.String(200))
+
     price = db.Column(db.Float)
     quantity = db.Column(db.Integer)
     total = db.Column(db.Float)
 
-    payment_method = db.Column(db.String(50), default="COD")
-    payment_status = db.Column(db.String(50), default="Pending")
+    payment_method = db.Column(
+        db.String(50),
+        default="COD"
+    )
 
-    status = db.Column(db.String(50), default="Pending")
+    payment_status = db.Column(
+        db.String(50),
+        default="Pending"
+    )
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    status = db.Column(
+        db.String(50),
+        default="Pending"
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        index=True
+    )

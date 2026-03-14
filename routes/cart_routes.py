@@ -4,6 +4,10 @@ from db import db
 from flask import Blueprint, request, jsonify, render_template
 
 
+
+# ==========================================================
+# BLUEPRINT
+# ==========================================================
 cart_bp = Blueprint("cart", __name__)
 
 

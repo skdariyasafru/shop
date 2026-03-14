@@ -1,6 +1,6 @@
 /* ================= CART FUNCTIONS ================= */
 
-export function addToCart(productId) {
+window.addToCart = function(productId) {
 
     fetch("/add_to_cart", {
         method: "POST",
@@ -15,10 +15,13 @@ export function addToCart(productId) {
         return res.json();
     })
     .then(data => {
+
         if (!data || data.status !== "added") return;
 
         const container = document.getElementById(`cart-control-${productId}`);
         if (!container) return;
+
+        const qty = data.quantity || 1;
 
         container.innerHTML = `
             <div class="qty-control">
@@ -26,19 +29,22 @@ export function addToCart(productId) {
                     onclick="changeQty(${productId}, 'decrease')">-</button>
 
                 <span id="qty-${productId}" class="qty-number">
-                    ${data.quantity}
+                    ${qty}
                 </span>
 
                 <button class="qty-btn"
                     onclick="changeQty(${productId}, 'increase')">+</button>
             </div>
         `;
+
+        updateCartCount(data.cart_count);
+
     })
     .catch(err => console.error("Add To Cart Error:", err));
 }
 
 
-export function changeQty(productId, action) {
+window.changeQty = function(productId, action) {
 
     fetch("/update_cart", {
         method: "POST",
@@ -74,6 +80,8 @@ export function changeQty(productId, action) {
                 `;
             }
 
+            updateCartCount(data.cart_count);
+
             const totalEl = document.getElementById("cart-total");
             if (totalEl && data.total !== undefined) {
                 totalEl.innerText = data.total;
@@ -83,20 +91,27 @@ export function changeQty(productId, action) {
         }
 
         const qtyEl = document.getElementById(`qty-${productId}`);
-        if (qtyEl && data.quantity !== undefined) {
-            qtyEl.innerText = data.quantity;
-        }
+        if (qtyEl) qtyEl.innerText = data.quantity;
 
         const subtotalEl = document.getElementById(`subtotal-${productId}`);
-        if (subtotalEl && data.subtotal !== undefined) {
-            subtotalEl.innerText = data.subtotal;
-        }
+        if (subtotalEl) subtotalEl.innerText = data.subtotal;
 
         const totalEl = document.getElementById("cart-total");
-        if (totalEl && data.total !== undefined) {
-            totalEl.innerText = data.total;
-        }
+        if (totalEl) totalEl.innerText = data.total;
+
+        updateCartCount(data.cart_count);
 
     })
     .catch(err => console.error("Quantity Update Error:", err));
+}
+
+
+/* ================= CART COUNT ================= */
+
+function updateCartCount(count) {
+
+    const el = document.getElementById("cartCount");
+    if (!el) return;
+
+    el.innerText = count;
 }
