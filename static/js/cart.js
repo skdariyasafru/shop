@@ -1,139 +1,156 @@
-/* ================= CART FUNCTIONS ================= */
+from flask_login import login_required, current_user
+from models.models import Cart, Product
+from db import db
+from flask import Blueprint, request, jsonify, render_template
 
-window.addToCart = function(productId) {
 
-    fetch("/add_to_cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: productId })
+cart_bp = Blueprint("cart", __name__)
+
+
+# ================= ADD TO CART =================
+@cart_bp.route("/add_to_cart", methods=["POST"])
+@login_required
+def add_to_cart():
+
+    data = request.get_json()
+    product_id = data.get("id")
+
+    item = Cart.query.filter_by(
+        user_id=current_user.id,
+        product_id=product_id
+    ).first()
+
+    if item:
+        item.quantity += 1
+    else:
+        item = Cart(
+            user_id=current_user.id,
+            product_id=product_id,
+            quantity=1
+        )
+        db.session.add(item)
+
+    db.session.commit()
+
+    cart_count = db.session.query(
+        db.func.sum(Cart.quantity)
+    ).filter(
+        Cart.user_id == current_user.id
+    ).scalar() or 0
+
+    return jsonify({
+        "status": "added",
+        "quantity": item.quantity,
+        "cart_count": cart_count
     })
-    .then(res => {
-        if (res.status === 401) {
-            window.location.href = "/?login=1";
-            return null;
-        }
-        return res.json();
+
+
+# ================= UPDATE CART =================
+@cart_bp.route("/update_cart", methods=["POST"])
+@login_required
+def update_cart():
+
+    data = request.get_json()
+    product_id = data.get("id")
+    action = data.get("action")
+
+    item = Cart.query.filter_by(
+        user_id=current_user.id,
+        product_id=product_id
+    ).first()
+
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+
+    if action == "increase":
+        item.quantity += 1
+
+    elif action == "decrease":
+
+        if item.quantity > 1:
+            item.quantity -= 1
+        else:
+            db.session.delete(item)
+            db.session.commit()
+
+            result = db.session.query(
+                db.func.sum(Product.price * Cart.quantity),
+                db.func.sum(Cart.quantity)
+            ).select_from(Cart).join(
+                Product, Cart.product_id == Product.id
+            ).filter(
+                Cart.user_id == current_user.id
+            ).first()
+
+            total = result[0] or 0
+            cart_count = result[1] or 0
+
+            return jsonify({
+                "removed": True,
+                "total": total,
+                "cart_count": cart_count
+            })
+
+    db.session.commit()
+
+    product = db.session.get(Product, product_id)
+
+    subtotal = product.price * item.quantity
+
+    result = db.session.query(
+        db.func.sum(Product.price * Cart.quantity),
+        db.func.sum(Cart.quantity)
+    ).select_from(Cart).join(
+        Product, Cart.product_id == Product.id
+    ).filter(
+        Cart.user_id == current_user.id
+    ).first()
+
+    total = result[0] or 0
+    cart_count = result[1] or 0
+
+    return jsonify({
+        "quantity": item.quantity,
+        "subtotal": subtotal,
+        "total": total,
+        "cart_count": cart_count
     })
-    .then(data => {
-
-        if (!data) return;
-
-        const container = document.getElementById(`cart-control-${productId}`);
-        if (!container) return;
-
-        const qty = data.quantity || 1;
-
-        /* Check if quantity element already exists */
-        const qtyEl = document.getElementById(`qty-${productId}`);
-
-        if (qtyEl) {
-            /* Just update number */
-            qtyEl.innerText = qty;
-        } 
-        else {
-            /* Replace Add to Cart button with qty controls */
-            container.innerHTML = `
-                <div class="qty-control">
-                    <button class="qty-btn"
-                        onclick="changeQty(${productId}, 'decrease')">-</button>
-
-                    <span id="qty-${productId}" class="qty-number">
-                        ${qty}
-                    </span>
-
-                    <button class="qty-btn"
-                        onclick="changeQty(${productId}, 'increase')">+</button>
-                </div>
-            `;
-        }
-
-        updateCartCount(data.cart_count);
-
-    })
-    .catch(err => console.error("Add To Cart Error:", err));
-};
 
 
-/* ================= CHANGE QUANTITY ================= */
+# ================= CART PAGE =================
+@cart_bp.route("/cart")
+@login_required
+def cart():
 
-window.changeQty = function(productId, action) {
+    items = db.session.query(
+        Cart.quantity,
+        Product.id,
+        Product.name,
+        Product.price
+    ).select_from(Cart).join(
+        Product, Cart.product_id == Product.id
+    ).filter(
+        Cart.user_id == current_user.id
+    ).all()
 
-    fetch("/update_cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id: productId,
-            action: action
+    cart_items = []
+    total = 0
+
+    for quantity, pid, name, price in items:
+
+        subtotal = price * quantity
+        total += subtotal
+
+        cart_items.append({
+            "product_id": pid,
+            "name": name,
+            "price": price,
+            "quantity": quantity,
+            "subtotal": subtotal
         })
-    })
-    .then(res => {
-        if (res.status === 401) {
-            window.location.href = "/?login=1";
-            return null;
-        }
-        return res.json();
-    })
-    .then(data => {
 
-        if (!data) return;
-
-        const row = document.getElementById(`row-${productId}`);
-        const container = document.getElementById(`cart-control-${productId}`);
-
-        /* Product removed */
-        if (data.removed) {
-
-            if (row) row.remove();
-
-            if (container && !row) {
-                container.innerHTML = `
-                    <button onclick="addToCart(${productId})">
-                        Add to Cart
-                    </button>
-                `;
-            }
-
-            updateCartCount(data.cart_count);
-
-            const totalEl = document.getElementById("cart-total");
-            if (totalEl && data.total !== undefined) {
-                totalEl.innerText = data.total;
-            }
-
-            return;
-        }
-
-        /* Update quantity */
-        const qtyEl = document.getElementById(`qty-${productId}`);
-        if (qtyEl) {
-            qtyEl.innerText = data.quantity;
-        }
-
-        /* Update subtotal on cart page */
-        const subtotalEl = document.getElementById(`subtotal-${productId}`);
-        if (subtotalEl) {
-            subtotalEl.innerText = data.subtotal;
-        }
-
-        /* Update cart total */
-        const totalEl = document.getElementById("cart-total");
-        if (totalEl) {
-            totalEl.innerText = data.total;
-        }
-
-        updateCartCount(data.cart_count);
-
-    })
-    .catch(err => console.error("Quantity Update Error:", err));
-};
-
-
-/* ================= CART COUNT ================= */
-
-function updateCartCount(count) {
-
-    const el = document.getElementById("cartCount");
-    if (!el) return;
-
-    el.innerText = count;
-}
+    return render_template(
+        "cart.html",
+        items=cart_items,
+        total=total
+    )
