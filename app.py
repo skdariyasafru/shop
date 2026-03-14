@@ -16,7 +16,18 @@ login_manager = LoginManager()
 
 
 # ================= SELF PING FUNCTION =================
+def self_ping():
 
+    url = "https://shop-1-tvqs.onrender.com/ping"
+
+    while True:
+        try:
+            requests.get(url, timeout=10)
+        except Exception:
+            pass
+
+        # wait 5 minutes
+        time.sleep(299)
 
 # ================= CREATE APP =================
 def create_app():
