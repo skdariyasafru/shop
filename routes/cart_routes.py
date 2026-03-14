@@ -4,7 +4,6 @@ from db import db
 from flask import Blueprint, request, jsonify, render_template
 
 
-
 # ==========================================================
 # BLUEPRINT
 # ==========================================================
@@ -36,7 +35,11 @@ def add_to_cart():
 
     db.session.commit()
 
-    cart_count = Cart.query.filter_by(user_id=current_user.id).count()
+    cart_count = db.session.query(
+        db.func.sum(Cart.quantity)
+    ).filter(
+        Cart.user_id == current_user.id
+    ).scalar() or 0
 
     return jsonify({
         "status": "added",
@@ -65,21 +68,31 @@ def update_cart():
 
     product = Product.query.get(product_id)
 
+    # increase quantity
     if action == "increase":
         item.quantity += 1
 
+    # decrease quantity
     elif action == "decrease":
+
         if item.quantity > 1:
             item.quantity -= 1
+
         else:
             db.session.delete(item)
             db.session.commit()
 
-            cart_count = Cart.query.filter_by(user_id=current_user.id).count()
+            cart_count = db.session.query(
+                db.func.sum(Cart.quantity)
+            ).filter(
+                Cart.user_id == current_user.id
+            ).scalar() or 0
 
             total = db.session.query(
                 db.func.sum(Product.price * Cart.quantity)
-            ).join(Product).filter(
+            ).join(
+                Product, Cart.product_id == Product.id
+            ).filter(
                 Cart.user_id == current_user.id
             ).scalar() or 0
 
@@ -95,11 +108,17 @@ def update_cart():
 
     total = db.session.query(
         db.func.sum(Product.price * Cart.quantity)
-    ).join(Product).filter(
+    ).join(
+        Product, Cart.product_id == Product.id
+    ).filter(
         Cart.user_id == current_user.id
     ).scalar() or 0
 
-    cart_count = Cart.query.filter_by(user_id=current_user.id).count()
+    cart_count = db.session.query(
+        db.func.sum(Cart.quantity)
+    ).filter(
+        Cart.user_id == current_user.id
+    ).scalar() or 0
 
     return jsonify({
         "quantity": item.quantity,
