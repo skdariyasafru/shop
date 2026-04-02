@@ -24,7 +24,7 @@ def self_ping():
         except Exception:
             pass
 
-        time.sleep(300)
+        time.sleep(3000)
 
 
 def create_app():
