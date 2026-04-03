@@ -18,35 +18,35 @@ window.addToCart = function(productId) {
 
         return res.json();
     })
-    .then(data => {
 
-        if (!data || data.status !== "added") return;
 
-        const container = document.getElementById(`cart-control-${productId}`);
-        if (!container) return;
+# ================= UPDATE CART =================
+@cart_bp.route("/update_cart", methods=["POST"])
+@login_required
+def update_cart():
 
-        const qty = data.quantity || 1;
+    data = request.get_json()
+    product_id = data.get("id")
+    action = data.get("action")
 
-        container.innerHTML = `
-            <div class="qty-control">
-                <button class="qty-btn"
-                    onclick="changeQty(${productId}, 'decrease')">-</button>
+    item = Cart.query.filter_by(
+        user_id=current_user.id,
+        product_id=product_id
+    ).first()
 
-                <span id="qty-${productId}" class="qty-number">
-                    ${qty}
-                </span>
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
 
-                <button class="qty-btn"
-                    onclick="changeQty(${productId}, 'increase')">+</button>
-            </div>
-        `;
+    if action == "increase":
+        item.quantity += 1
 
-        updateCartCount(data.cart_count);
+    elif action == "decrease":
 
-    })
-    .catch(err => console.error("Add To Cart Error:", err));
-}
-
+        if item.quantity > 1:
+            item.quantity -= 1
+        else:
+            db.session.delete(item)
+            db.session.commit()
 
 /* ================= CHANGE QTY ================= */
 
@@ -73,55 +73,72 @@ window.changeQty = function(productId, action) {
     })
     .then(data => {
 
-        if (!data) return;
+            total = result[0] or 0
+            cart_count = result[1] or 0
 
-        const row = document.getElementById(`row-${productId}`);
-        const container = document.getElementById(`cart-control-${productId}`);
+            return jsonify({
+                "removed": True,
+                "total": total,
+                "cart_count": cart_count
+            })
 
-        if (data.removed) {
+    db.session.commit()
 
-            if (row) row.remove();
+    product = db.session.get(Product, product_id)
 
-            if (container && !row) {
-                container.innerHTML = `
-                    <button onclick="addToCart(${productId})">
-                        Add to Cart
-                    </button>
-                `;
-            }
+    subtotal = product.price * item.quantity
 
-            updateCartCount(data.cart_count);
+    result = db.session.query(
+        db.func.sum(Product.price * Cart.quantity),
+        db.func.sum(Cart.quantity)
+    ).select_from(Cart).join(
+        Product, Cart.product_id == Product.id
+    ).filter(
+        Cart.user_id == current_user.id
+    ).first()
 
-            const totalEl = document.getElementById("cart-total");
-            if (totalEl && data.total !== undefined) {
-                totalEl.innerText = data.total;
-            }
+    total = result[0] or 0
+    cart_count = result[1] or 0
 
-            return;
-        }
-
-        const qtyEl = document.getElementById(`qty-${productId}`);
-        if (qtyEl) qtyEl.innerText = data.quantity;
-
-        const subtotalEl = document.getElementById(`subtotal-${productId}`);
-        if (subtotalEl) subtotalEl.innerText = data.subtotal;
-
-        const totalEl = document.getElementById("cart-total");
-        if (totalEl) totalEl.innerText = data.total;
-
-        updateCartCount(data.cart_count);
-
+    return jsonify({
+        "quantity": item.quantity,
+        "subtotal": subtotal,
+        "total": total,
+        "cart_count": cart_count
     })
-    .catch(err => console.error("Quantity Update Error:", err));
-}
 
 
-/* ================= CART COUNT ================= */
+# ================= CART PAGE =================
+@cart_bp.route("/cart")
+@login_required
+def cart():
 
-function updateCartCount(count) {
+    items = db.session.query(
+        Cart.quantity,
+        Product.id,
+        Product.name,
+        Product.price
+    ).select_from(Cart).join(
+        Product, Cart.product_id == Product.id
+    ).filter(
+        Cart.user_id == current_user.id
+    ).all()
 
-    const el = document.getElementById("cartCount");
-    if (!el) return;
+    cart_items = []
+    total = 0
+
+    for quantity, pid, name, price in items:
+
+        subtotal = price * quantity
+        total += subtotal
+
+        cart_items.append({
+            "product_id": pid,
+            "name": name,
+            "price": price,
+            "quantity": quantity,
+            "subtotal": subtotal
+        })
 
     el.innerText = count ?? 0;
 }

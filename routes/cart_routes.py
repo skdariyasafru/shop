@@ -54,7 +54,6 @@ def add_to_cart():
 def update_cart():
 
     data = request.get_json()
-
     product_id = data.get("id")
     action = data.get("action")
 
@@ -68,9 +67,11 @@ def update_cart():
 
     product = Product.query.get(product_id)
 
+    # increase quantity
     if action == "increase":
         item.quantity += 1
 
+    # decrease quantity
     elif action == "decrease":
 
         if item.quantity > 1:
@@ -145,16 +146,18 @@ def cart():
     cart_items = []
     total = 0
 
-    for quantity, pid, name, price in items:
+    for row in cart_rows:
 
-        subtotal = price * quantity
+        product = Product.query.get(row.product_id)
+
+        subtotal = product.price * row.quantity
         total += subtotal
 
         cart_items.append({
-            "product_id": pid,
-            "name": name,
-            "price": price,
-            "quantity": quantity,
+            "product_id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "quantity": row.quantity,
             "subtotal": subtotal
         })
 
