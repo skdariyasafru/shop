@@ -28,11 +28,6 @@ def create_app():
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
-    # Health check route (for UptimeRobot)
-    @app.route("/ping")
-    def ping():
-        return "alive"
-
     # Login check route (used in JS)
     @app.route("/check_login")
     def check_login():
