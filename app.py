@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, request
 import os
 import time
+
+from flask import Flask, jsonify, request
 from flask_login import LoginManager, current_user
 
 from config import Config
@@ -19,7 +20,7 @@ def create_app():
     # Initialize database
     init_db(app)
 
-    # Login manager setup
+    # ================= LOGIN MANAGER =================
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
     login_manager.login_message = None
@@ -27,25 +28,33 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
-    
 
+
+    # ================= REQUEST TIMER =================
     @app.before_request
     def start_timer():
         request.start_time = time.time()
 
     @app.after_request
     def log_time(response):
-        duration = time.time() - request.start_time
-        print(f"{request.path} took {duration:.2f}s")
+        start = getattr(request, "start_time", None)
+
+        if start:
+            duration = time.time() - start
+            print(f"{request.path} took {duration:.2f}s")
+
         return response
-    # Login check route (used in JS)
+
+
+    # ================= LOGIN CHECK =================
     @app.route("/check_login")
     def check_login():
         return jsonify({
             "logged_in": current_user.is_authenticated
         })
 
-    # Register blueprints
+
+    # ================= BLUEPRINTS =================
     from routes.auth_routes import auth_bp
     from routes.product_routes import product_bp
     from routes.cart_routes import cart_bp
@@ -61,8 +70,8 @@ def create_app():
     return app
 
 
+# ================= RUN APP =================
 app = create_app()
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
