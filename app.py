@@ -33,15 +33,19 @@ def create_app():
     # ================= REQUEST TIMER =================
     @app.before_request
     def start_timer():
-        request.start_time = time.time()
+        try:
+            request.start_time = time.time()
+        except Exception:
+            request.start_time = None
 
     @app.after_request
     def log_time(response):
-        start = getattr(request, "start_time", None)
-
-        if start:
-            duration = time.time() - start
-            print(f"{request.path} took {duration:.2f}s")
+        try:
+            if hasattr(request, "start_time") and request.start_time:
+                duration = time.time() - request.start_time
+                print(f"{request.path} took {duration:.2f}s")
+        except Exception:
+            pass
 
         return response
 
@@ -76,3 +80,6 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
+
+
