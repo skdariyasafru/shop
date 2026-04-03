@@ -1,31 +1,31 @@
 /* ================= AUTH FUNCTIONS ================= */
 
-export function openLogin() {
+function openLogin() {
     const modal = document.getElementById("loginModal");
-    if (modal) modal.style.display = "block";
+    if (modal) modal.style.display = "flex";
 }
 
-export function closeLogin() {
+function closeLogin() {
     const modal = document.getElementById("loginModal");
     if (modal) modal.style.display = "none";
 }
 
-export function openRegister() {
+function openRegister() {
     const modal = document.getElementById("registerModal");
-    if (modal) modal.style.display = "block";
+    if (modal) modal.style.display = "flex";
 }
 
-export function closeRegister() {
+function closeRegister() {
     const modal = document.getElementById("registerModal");
     if (modal) modal.style.display = "none";
 }
 
-export function switchToRegister() {
+function switchToRegister() {
     closeLogin();
     openRegister();
 }
 
-export function switchToLogin() {
+function switchToLogin() {
     closeRegister();
     openLogin();
 }
