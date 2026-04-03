@@ -27,7 +27,17 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
+    
 
+    @app.before_request
+    def start_timer():
+        request.start_time = time.time()
+
+    @app.after_request
+    def log_time(response):
+        duration = time.time() - request.start_time
+        print(f"{request.path} took {duration:.2f}s")
+        return response
     # Login check route (used in JS)
     @app.route("/check_login")
     def check_login():
