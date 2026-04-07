@@ -1,6 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+
 <h2>Register</h2>
-<form method="post">
-<input name="username" placeholder="Username" required>
-<input type="password" name="password" placeholder="Password" required>
-<button type="submit">Register</button>
+
+<form id="registerForm">
+    <input type="text" id="name" placeholder="Name" required><br><br>
+    <input type="email" id="email" placeholder="Email" required><br><br>
+    <input type="password" id="password" placeholder="Password" required><br><br>
+
+    <!-- Hidden referral field -->
+    <input type="hidden" id="referral_code">
+
+    <button type="submit">Register</button>
 </form>
+
+<script>
+    // ✅ Get referral from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get("ref");
+
+    if (ref) {
+        document.getElementById("referral_code").value = ref;
+    }
+
+    // ✅ Submit form
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const data = {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            referral_code: document.getElementById("referral_code").value
+        };
+
+        const res = await fetch("/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        alert(result.message);
+    });
+</script>
+
+</body>
+</html>
