@@ -9,24 +9,31 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Indexed for fast login
     username = db.Column(db.String(100), unique=True, index=True)
-
     password = db.Column(db.String(200))
 
     phone = db.Column(db.String(20))
     address = db.Column(db.Text)
 
-    referral_code = db.Column(db.String(50), index=True)
-    referred_by = db.Column(db.String(50), index=True)
+    # 🔗 Referral system
+    referral_code = db.Column(db.String(20), unique=True, index=True)
+    referred_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
+    # 💰 Wallet system
+    wallet_balance = db.Column(db.Float, default=0.0)
+
+    # 🎯 Optional reward points
     points = db.Column(db.Integer, default=0)
 
-    # optimized relationship loading
+    # 👥 Relationship (who referred whom)
+    referrer = db.relationship("User", remote_side=[id])
+
+    # 🛒 Cart relationship
     carts = db.relationship(
         "Cart",
         backref="user",
-        lazy="select"
+        lazy="select",
+        cascade="all, delete-orphan"
     )
 
 
@@ -36,9 +43,7 @@ class Product(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # index improves search speed
     name = db.Column(db.String(200), index=True)
-
     price = db.Column(db.Float)
     image = db.Column(db.String(300))
 
@@ -69,7 +74,6 @@ class Cart(db.Model):
 
     quantity = db.Column(db.Integer, default=1)
 
-    # composite index → VERY important for cart speed
     __table_args__ = (
         db.Index("idx_user_product", "user_id", "product_id"),
     )
@@ -84,6 +88,13 @@ class Order(db.Model):
     order_number = db.Column(
         db.String(20),
         unique=True,
+        index=True
+    )
+
+    # 🔗 Link to user (IMPORTANT for referral commission)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
         index=True
     )
 
