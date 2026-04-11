@@ -6,5 +6,5 @@ def init_db(app):
     db.init_app(app)
 
     # create tables automatically
-    with app.app_context():
-        db.create_all()
+   # with app.app_context():
+      #  db.create_all()
