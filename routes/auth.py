@@ -22,22 +22,24 @@ def register():
     phone = request.form.get("phone")
     address = request.form.get("address")
 
-    referral_code = request.form.get("referral_code")
+    referral_code = request.form.get("referral_code", "").strip()
 
-    # 🔍 Find referrer
+    print("Entered:", referral_code)
+
     referrer = None
     if referral_code:
-        referrer = User.query.filter_by(referral_code=referral_code).first()
+        referrer = User.query.filter(
+            User.referral_code.ilike(referral_code)
+        ).first()
 
-    # 🚫 Duplicate user
+    print("Referrer:", referrer)
+
     if User.query.filter_by(username=username).first():
         return redirect(url_for("auth.home", register=1))
 
-    # 🎯 Generate new referral code
     import uuid
     new_ref_code = str(uuid.uuid4())[:8]
 
-    # ✅ CREATE USER
     user = User(
         username=username,
         password=password,
