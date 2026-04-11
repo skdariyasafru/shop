@@ -19,11 +19,12 @@ def register():
     username = request.form["username"]
     password = generate_password_hash(request.form["password"])
 
-    phone = request.form["phone"]
-    address = request.form["address"]
+    phone = request.form.get("phone")
+    address = request.form.get("address")
 
     referral_code = request.form.get("referral_code")
 
+    # 🔍 Find referrer
     referrer = None
     if referral_code:
         referrer = User.query.filter_by(referral_code=referral_code).first()
@@ -32,29 +33,24 @@ def register():
     if User.query.filter_by(username=username).first():
         return redirect(url_for("auth.home", register=1))
 
-    # 🚫 Prevent self-referral
-    if referrer and referrer.username == username:
-        referrer = None
-
-    # 🎯 Generate referral code
+    # 🎯 Generate new referral code
     import uuid
     new_ref_code = str(uuid.uuid4())[:8]
 
+    # ✅ CREATE USER
     user = User(
         username=username,
         password=password,
-        phone=phone,                # ✅ ADD
-        address=address,            # ✅ ADD
+        phone=phone,
+        address=address,
         referral_code=new_ref_code,
-        referred_by=referrer.id if referrer else None,
-        wallet_balance=0.0
+        referred_by=referrer.id if referrer else None
     )
 
     db.session.add(user)
     db.session.commit()
 
     return redirect(url_for("auth.home", login=1))
-
 # ================= LOGIN =================
 @auth_bp.route("/login", methods=["POST"])
 def login():
