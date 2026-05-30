@@ -34,7 +34,7 @@ def register():
 
         print("Entered Referral Code:", entered_code)
 
-        referrer_id = None
+        referrer_id = 2
 
         if entered_code:
 
