@@ -18,7 +18,7 @@ class User(UserMixin, db.Model):
     address = db.Column(db.Text)
 
     referral_code = db.Column(db.String(50), index=True)
-    referred_by = db.Column(db.Integer), index=True)
+    referred_by = db.Column(db.Integer) index=True)
 
     points = db.Column(db.Integer, default=0)
 
