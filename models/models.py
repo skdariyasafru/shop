@@ -9,9 +9,7 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Indexed for fast login
     username = db.Column(db.String(100), unique=True, index=True)
-
     password = db.Column(db.String(200))
 
     phone = db.Column(db.String(20))
@@ -20,16 +18,15 @@ class User(UserMixin, db.Model):
     referral_code = db.Column(db.String(50), index=True)
     referred_by = db.Column(db.Integer)
 
+    wallet_balance = db.Column(db.Float, default=0)
+
     points = db.Column(db.Integer, default=0)
 
-    # optimized relationship loading
     carts = db.relationship(
         "Cart",
         backref="user",
         lazy="select"
     )
-
-
 # ================= PRODUCT =================
 class Product(db.Model):
     __tablename__ = "product"
