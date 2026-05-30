@@ -19,36 +19,37 @@ def register():
 
         username = request.form["username"]
         password = generate_password_hash(request.form["password"])
-
+        
         phone = request.form.get("phone")
         address = request.form.get("address")
-
-        entered_referral_code = request.form.get("referred_by")
-
-        referrer = None
-
-        if entered_referral_code:
+        
+        entered_code = request.form.get("referred_by", "").strip()
+        
+        referrer_id = None
+        
+        if entered_code:
             referrer = User.query.filter_by(
-                referral_code=entered_referral_code
+                referral_code=entered_code
             ).first()
-
+        
+            if referrer:
+                referrer_id = int(referrer.id)
+        
         new_referral_code = uuid.uuid4().hex[:8]
-
+        
         user = User(
             username=username,
             password=password,
             phone=phone,
             address=address,
             referral_code=new_referral_code,
-            referred_by=referrer.id if referrer else None,
+            referred_by=referrer_id,
             wallet_balance=0,
             points=0
         )
-
+        
         db.session.add(user)
         db.session.commit()
-
-        return redirect("/")
 
     return render_template("register.html")
 
