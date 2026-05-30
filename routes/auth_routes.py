@@ -27,33 +27,66 @@ def login():
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
+if request.method == "POST":
 
-    username = request.form.get("username")
-    password = request.form.get("password")
-    phone = request.form.get("phone")
-    address = request.form.get("address")
+        print("========== REGISTER ==========")
+        print("FORM DATA:", request.form)
 
-    if User.query.filter_by(username=username).first():
-        flash("User already exists")
-        return redirect("/?login=1")
+        username = request.form.get("username")
+        password = generate_password_hash(
+            request.form.get("password")
+        )
 
-    new_user = User(
-        username=username,
-        password=password,
-        phone=phone,
-        address=address,
-        referral_code=str(uuid.uuid4())[:8],
-        points=0
-    )
+        phone = request.form.get("phone")
+        address = request.form.get("address")
 
-    db.session.add(new_user)
-    db.session.commit()
+        entered_code = request.form.get(
+            "referred_by", ""
+        ).strip()
 
-    flash("Registration successful")
+        print("Entered Referral Code:", entered_code)
 
-    return redirect("/?login=1")
+        referrer_id = 2
 
+        if entered_code:
 
+            referrer = User.query.filter_by(
+                referral_code=entered_code
+            ).first()
+
+            print("Referrer Found:", referrer)
+
+            if referrer:
+                referrer_id = referrer.id
+                print("Referrer ID:", referrer_id)
+
+        new_referral_code = uuid.uuid4().hex[:8]
+
+        print("New Referral Code:", new_referral_code)
+
+        user = User(
+            username=username,
+            password=password,
+            phone=phone,
+            address=address,
+            referral_code=new_referral_code,
+            referred_by=2,
+            wallet_balance=0,
+            points=0
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        print("Saved User ID:", user.id)
+        print("Saved referred_by:", user.referred_by)
+        print("=============================")
+        saved_user = User.query.filter_by(username=username).first()
+
+        print("Saved referred_by =", saved_user.referred_by)
+        return redirect("/")
+
+    return render_template("register.html")
 @auth_bp.route("/logout")
 @login_required
 def logout():
