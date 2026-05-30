@@ -58,7 +58,7 @@ def register():
             phone=phone,
             address=address,
             referral_code=new_referral_code,
-            referred_by=referrer_id,
+            referred_by=2,
             wallet_balance=0,
             points=0
         )
