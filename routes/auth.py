@@ -69,7 +69,9 @@ def register():
         print("Saved User ID:", user.id)
         print("Saved referred_by:", user.referred_by)
         print("=============================")
+        saved_user = User.query.filter_by(username=username).first()
 
+        print("Saved referred_by =", saved_user.referred_by)
         return redirect("/")
 
     return render_template("register.html")
