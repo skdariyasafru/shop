@@ -25,7 +25,7 @@ def register():
         
         entered_code = request.form.get("referred_by", "").strip()
         
-        referrer_id = None
+        referrer_id = 1
         
         if entered_code:
             referrer = User.query.filter_by(
