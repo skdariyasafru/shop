@@ -17,26 +17,41 @@ def register():
 
     if request.method == "POST":
 
-        username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
-        
+        print("========== REGISTER ==========")
+        print("FORM DATA:", request.form)
+
+        username = request.form.get("username")
+        password = generate_password_hash(
+            request.form.get("password")
+        )
+
         phone = request.form.get("phone")
         address = request.form.get("address")
-        
-        entered_code = request.form.get("referred_by", "").strip()
-        
-        referrer_id = 1
-        
+
+        entered_code = request.form.get(
+            "referred_by", ""
+        ).strip()
+
+        print("Entered Referral Code:", entered_code)
+
+        referrer_id = None
+
         if entered_code:
+
             referrer = User.query.filter_by(
                 referral_code=entered_code
             ).first()
-        
+
+            print("Referrer Found:", referrer)
+
             if referrer:
-                referrer_id = int(referrer.id)
-        
+                referrer_id = referrer.id
+                print("Referrer ID:", referrer_id)
+
         new_referral_code = uuid.uuid4().hex[:8]
-        
+
+        print("New Referral Code:", new_referral_code)
+
         user = User(
             username=username,
             password=password,
@@ -47,13 +62,17 @@ def register():
             wallet_balance=0,
             points=0
         )
-        
+
         db.session.add(user)
         db.session.commit()
 
+        print("Saved User ID:", user.id)
+        print("Saved referred_by:", user.referred_by)
+        print("=============================")
+
+        return redirect("/")
+
     return render_template("register.html")
-
-
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
 
