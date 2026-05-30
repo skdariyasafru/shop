@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from models.models import User
+from models.models import User, Product
 from db import db
-from models.models import Product
+import uuid
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -11,23 +11,53 @@ auth_bp = Blueprint("auth", __name__)
 def home():
     return render_template("home.html")
 
+
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
+
     if request.method == "POST":
+
         username = request.form["username"]
         password = generate_password_hash(request.form["password"])
 
-        user = User(username=username, password=password)
+        phone = request.form.get("phone")
+        address = request.form.get("address")
+
+        entered_referral_code = request.form.get("referred_by")
+
+        referrer = None
+
+        if entered_referral_code:
+            referrer = User.query.filter_by(
+                referral_code=entered_referral_code
+            ).first()
+
+        new_referral_code = uuid.uuid4().hex[:8]
+
+        user = User(
+            username=username,
+            password=password,
+            phone=phone,
+            address=address,
+            referral_code=new_referral_code,
+            referred_by=referrer.id if referrer else None,
+            wallet_balance=0,
+            points=0
+        )
+
         db.session.add(user)
         db.session.commit()
 
-        return redirect(url_for("auth.login"))
+        return redirect("/")
 
     return render_template("register.html")
 
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+
         username = request.form["username"]
         password = request.form["password"]
 
@@ -37,17 +67,27 @@ def login():
             login_user(user)
             return redirect(url_for("auth.dashboard"))
 
+        return redirect("/")
+
     return render_template("login.html")
 
 
 @auth_bp.route("/dashboard")
 @login_required
 def dashboard():
+
     products = Product.query.all()
-    return render_template("dashboard.html", products=products)
+
+    return render_template(
+        "dashboard.html",
+        products=products
+    )
+
 
 @auth_bp.route("/logout")
 @login_required
 def logout():
+
     logout_user()
+
     return redirect(url_for("product.index"))
