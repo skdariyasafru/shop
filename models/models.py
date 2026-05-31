@@ -71,3 +71,41 @@ class Cart(db.Model):
 
 
 # ================= ORDER =================
+class Order(db.Model):
+    __tablename__ = "order"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    order_number = db.Column(
+        db.String(20),
+        unique=True,
+        index=True
+    )
+
+    username = db.Column(db.String(100), index=True)
+
+    phone = db.Column(db.String(20))
+    address = db.Column(db.Text)
+
+    product_name = db.Column(db.String(200))
+
+    price = db.Column(db.Float)
+    quantity = db.Column(db.Integer)
+    total = db.Column(db.Float)
+
+    # NEW COLUMN
+    pv_points = db.Column(db.Float, default=0)
+
+    payment_method = db.Column(
+        db.String(50),
+        default="COD"
+    )
+
+    payment_status = db.Column(
+        db.String(50),
+        default="Pending"
+    )
+
+    status = db.Column(
+        db.String(50),
+       
