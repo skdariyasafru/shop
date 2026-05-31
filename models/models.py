@@ -9,46 +9,41 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Indexed for fast login
     username = db.Column(db.String(100), unique=True, index=True)
-
     password = db.Column(db.String(200))
 
     phone = db.Column(db.String(20))
     address = db.Column(db.Text)
 
     referral_code = db.Column(db.String(50), index=True)
-    referred_by = db.Column(db.String(50), index=True)
+    referred_by = db.Column(db.Integer)
+
+    wallet_balance = db.Column(db.Float, default=0)
 
     points = db.Column(db.Integer, default=0)
 
-    # optimized relationship loading
     carts = db.relationship(
         "Cart",
         backref="user",
         lazy="select"
     )
-
-
 # ================= PRODUCT =================
 class Product(db.Model):
     __tablename__ = "product"
 
     id = db.Column(db.Integer, primary_key=True)
-
-    # index improves search speed
     name = db.Column(db.String(200), index=True)
 
     price = db.Column(db.Float)
     image = db.Column(db.String(300))
+
+    pv_value = db.Column(db.Float, default=0)
 
     carts = db.relationship(
         "Cart",
         backref="product",
         lazy="select"
     )
-
-
 # ================= CART =================
 class Cart(db.Model):
     __tablename__ = "cart"
@@ -97,6 +92,8 @@ class Order(db.Model):
     price = db.Column(db.Float)
     quantity = db.Column(db.Integer)
     total = db.Column(db.Float)
+
+    pv_points = db.Column(db.Float, default=0)
 
     payment_method = db.Column(
         db.String(50),
