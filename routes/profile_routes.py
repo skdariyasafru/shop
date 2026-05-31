@@ -10,7 +10,7 @@ profile_bp = Blueprint("profile", __name__)
 @login_required
 def profile():
 
-    referred_name = "None"
+    referred_name = "shaik"
 
     if current_user.referred_by:
         ref_user = User.query.get(current_user.referred_by)
