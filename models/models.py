@@ -93,7 +93,6 @@ class Order(db.Model):
     quantity = db.Column(db.Integer)
     total = db.Column(db.Float)
 
-    # NEW COLUMN
     pv_points = db.Column(db.Float, default=0)
 
     payment_method = db.Column(
@@ -108,4 +107,11 @@ class Order(db.Model):
 
     status = db.Column(
         db.String(50),
-       
+        default="Pending"
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        index=True
+    )
