@@ -32,20 +32,18 @@ class Product(db.Model):
     __tablename__ = "product"
 
     id = db.Column(db.Integer, primary_key=True)
-
-    # index improves search speed
     name = db.Column(db.String(200), index=True)
 
     price = db.Column(db.Float)
     image = db.Column(db.String(300))
+
+    pv_value = db.Column(db.Float, default=0)
 
     carts = db.relationship(
         "Cart",
         backref="product",
         lazy="select"
     )
-
-
 # ================= CART =================
 class Cart(db.Model):
     __tablename__ = "cart"
