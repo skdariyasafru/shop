@@ -44,6 +44,7 @@ def checkout():
             price=product.price,
             quantity=item.quantity,
             total=product.price * item.quantity,
+            pv_points=product.pv_value * item.quantity,
             status="Pending"
         )
 
