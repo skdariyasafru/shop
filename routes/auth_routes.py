@@ -36,10 +36,7 @@ def register():
     print("FORM DATA:", request.form)
 
     username = request.form.get("username")
-    password = generate_password_hash(
-        request.form.get("password")
-    )
-
+    password = password = request.form.get("password")
     phone = request.form.get("phone")
     address = request.form.get("address")
 
