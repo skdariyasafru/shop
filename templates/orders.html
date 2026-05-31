@@ -6,7 +6,8 @@
 <table border="1" cellpadding="8" style="width:100%">
 <tr>
     <th>Order No</th>
-    <th>Total</th>
+    <th>Total Amount</th>
+    <th>Total PV</th>
     <th>Status</th>
     <th>Date</th>
 </tr>
@@ -18,11 +19,22 @@
             {{ order.grouper }}
         </a>
     </td>
+
     <td>
         ₹{{ order.list | sum(attribute='total') }}
     </td>
-    <td>{{ order.list[0].status }}</td>
-    <td>{{ order.list[0].created_at.strftime('%d-%m-%Y') }}</td>
+
+    <td>
+        {{ order.list | sum(attribute='pv_points') }}
+    </td>
+
+    <td>
+        {{ order.list[0].status }}
+    </td>
+
+    <td>
+        {{ order.list[0].created_at.strftime('%d-%m-%Y') }}
+    </td>
 </tr>
 {% endfor %}
 
